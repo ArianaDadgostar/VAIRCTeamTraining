@@ -1,4 +1,6 @@
-﻿namespace BSTHeapCombo;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace BSTHeapCombo;
 
 public class Node<T> where T : IComparable<T>
 {
@@ -20,20 +22,22 @@ public class BSTHeap <T> where T : IComparable<T>
 
     public Node<T> RotateLeft(Node<T> node)
     {
+        Node<T> newLeft = node.right.left;
         Node<T> newParent = node.right;
         newParent.left = node;
-        node.right = newParent.left;
+        node.right = newLeft;
 
-        return node;
+        return newParent;
     }
 
     public Node<T> RotateRight(Node<T> node)
     {
+        Node<T> newRight = node.left.right;
         Node<T> newParent = node.left;
         newParent.right = node;
-        node.left = newParent.right;
+        node.left = newRight;
 
-        return node;
+        return newParent;
     }
 
     public Node<T> Insert(T value, Node<T> node)
@@ -67,6 +71,86 @@ public class BSTHeap <T> where T : IComparable<T>
         return node;
     }
 
+    public void RemovalRemainsInsert(Node<T> node)
+    {
+        if(node == null) return;
+
+        Head = Insert(node.value, Head);
+        RemovalRemainsInsert(node.left);
+        RemovalRemainsInsert(node.right);
+    }
+
+    public Node<T> RemoveChecks(Node<T> node)
+    {
+        if(node == null) return node;
+
+        if(node.left != null && node.right != null)
+        {
+            Node<T> nodeReplacement;
+            if(node.left.priority <= node.right.priority)
+            {
+                nodeReplacement = node.right;
+                node = node.left;
+                RemovalRemainsInsert(node.right);
+                node.right = nodeReplacement;
+
+                return node;
+            }
+
+            nodeReplacement = node.left;
+            node = node.right;
+            RemovalRemainsInsert(node.left);
+            node.left = nodeReplacement;
+            return node;
+        }
+        else if(node.left != null)
+        {
+            node = node.left;
+        }
+        else if(node.right != null)
+        {
+            node = node.right;
+        }
+
+        return node;
+    }
+
+    public Node<T> Remove(T value, Node<T> node)
+    {
+        if(node == null) return node;
+
+        if(value.CompareTo(node.value) > 0)
+        {
+            node.right = Remove(value, node.right);
+        }
+        else if(value.CompareTo(node.value) < 0)
+        {
+            node.left = Remove(value, node.left);
+        }
+        else if(!node.value.Equals(value)) return node;
+
+        node = RemoveChecks(node);
+
+        return node;
+    }
+
+    public Node<T> Search(T value, Node<T> node)
+    {
+        if(node == null) return null;
+
+        if(value.CompareTo(node.value) > 0)
+        {
+            return Search(value, node.right);
+        }
+        else if(value.CompareTo(node.value) < 0)
+        {
+            return Search(value, node.left);
+        }
+        else return node;
+    }
+
+    #region Testing
+
     public bool TestPriorityAndValue(Node<T> node)
     {
         if(node == null) return true;
@@ -79,4 +163,6 @@ public class BSTHeap <T> where T : IComparable<T>
 
         return TestPriorityAndValue(node.left) && TestPriorityAndValue(node.right);
     }
+
+    #endregion
 }
