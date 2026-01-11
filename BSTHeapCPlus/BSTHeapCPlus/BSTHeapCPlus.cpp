@@ -2,6 +2,7 @@
 //
 
 #include <iostream>
+#include <queue>
 
 template<typename T>
 struct Node
@@ -14,8 +15,8 @@ struct Node
 
         Node(T value, int priority)
         {
-            this.value = &value;
-            this.priority = priority;
+            this->value = &value;
+            this->priority = priority;
         }
 };
 
@@ -45,7 +46,7 @@ struct BSTHeap
         return newParent;
     }
 
-    Node* Insert(T value, Node<T>* node)
+    Node<T>* Insert(T value, Node<T>* node)
     {
         if (node == nullptr)
         {
@@ -53,11 +54,11 @@ struct BSTHeap
             return node;
         }
 
-        if (value > node->value)
+        if (value > *node->value)
         {
             node->right = Insert(value, node->right);
         }
-        else if (value < node->value)
+        else if (value < * node->value)
         {
             node->left = Insert(value, node->left);
         }
@@ -80,8 +81,38 @@ struct BSTHeap
         if (current == nullptr) return;
 
         InOrderTraversal(current->left);
-        std::cout << current->priority << " ";
+        std::cout << *current->value << " ";
         InOrderTraversal(current->right);
+    }
+
+
+    void LevelOrderTransversal()
+    {
+        std::queue<Node<T>*> storage = std::queue<Node<T>*>();
+        std::queue<int> result = std::queue<int>();
+        
+        storage.push(Head);
+        while (!storage.empty())
+        {
+            Node<T>* curr = storage.front();
+            storage.pop();
+            result.push(curr->priority);
+
+            if (curr->left != nullptr)
+            {
+                storage.push(curr->left);
+            }
+            if (curr->right != nullptr)
+            {
+                storage.push(curr->right);
+            }
+        }
+
+        while (!result.empty())
+        {
+            std::cout << result.front() << " ";
+            result.pop();
+        }
     }
 };
 
@@ -89,13 +120,14 @@ struct BSTHeap
 int main()
 {
     BSTHeap<int> tree = BSTHeap<int>();
-    int values[10];
+    int values[9];
 
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < 9; i++)
     {
         values[i] = rand() % 100;
         tree.Head = tree.Insert(values[i], tree.Head);
     }
+    //tree.LevelOrderTransversal();
     tree.InOrderTraversal(tree.Head);
 }
 
