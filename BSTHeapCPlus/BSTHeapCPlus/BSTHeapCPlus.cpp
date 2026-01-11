@@ -10,12 +10,12 @@ struct Node
     public:
         Node<T>* left;
         Node<T>* right;
-        T* value;
+        T value;
         int priority;
 
         Node(T value, int priority)
         {
-            this->value = &value;
+            this->value = value;
             this->priority = priority;
         }
 };
@@ -54,11 +54,11 @@ struct BSTHeap
             return node;
         }
 
-        if (value > *node->value)
+        if (value > node->value)
         {
             node->right = Insert(value, node->right);
         }
-        else if (value < * node->value)
+        else if (value < node->value)
         {
             node->left = Insert(value, node->left);
         }
@@ -81,7 +81,7 @@ struct BSTHeap
         if (current == nullptr) return;
 
         InOrderTraversal(current->left);
-        std::cout << *current->value << " ";
+        std::cout << current->value << " "; // this line somehow makes the value 1
         InOrderTraversal(current->right);
     }
 
@@ -120,14 +120,15 @@ struct BSTHeap
 int main()
 {
     BSTHeap<int> tree = BSTHeap<int>();
-    int values[9];
+    int values[10];
 
-    for (size_t i = 0; i < 9; i++)
+    for (size_t i = 0; i < 10; i++)
     {
         values[i] = rand() % 100;
         tree.Head = tree.Insert(values[i], tree.Head);
     }
-    //tree.LevelOrderTransversal();
+    tree.LevelOrderTransversal();
+    std::cout << std::endl;
     tree.InOrderTraversal(tree.Head);
 }
 
