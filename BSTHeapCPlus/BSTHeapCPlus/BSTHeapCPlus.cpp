@@ -114,8 +114,78 @@ struct BSTHeap
             result.pop();
         }
     }
-};
 
+    
+    void RemovalRemainsInsert(Node<T>* node)
+    {
+        if(node == nullptr) return;
+
+        Head = Insert(node->value, Head);
+        RemovalRemainsInsert(node->left);
+        RemovalRemainsInsert(node->right);
+    }
+
+    Node<T>* RemoveChecks(Node<T>* node)
+    {
+        if(node == nullptr) return node;
+
+        if(node->left != nullptr && node->right != nullptr)
+        {
+            Node<T>* nodeReplacement;
+            if(node->left->priority <= node->right->priority)
+            {
+                nodeReplacement = node->right;
+                node = node->left;
+                RemovalRemainsInsert(node->right);
+                node->right = nodeReplacement;
+
+                return node;
+            }
+
+            nodeReplacement = node->left;
+            node = node->right;
+            RemovalRemainsInsert(node->left);
+            node->left = nodeReplacement;
+            return node;
+        }
+        else if(node->left != nullptr)
+        {
+            node = node->left;
+        }
+        else if(node->right != nullptr)
+        {
+            node = node->right;
+        }
+        else
+        {
+            // delete node;
+            // return nullptr;
+        }
+
+        return node;
+    }
+
+    Node<T>* Remove(T value, Node<T>* node)
+    {
+        if(node == nullptr) return node;
+
+        if(value > node->value)
+        {
+            node->right = Remove(value, node->right);
+            return node;
+        }
+        else if(value < node->value)
+        {
+            node->left = Remove(value, node->left);
+            return node;
+        }
+        else if(node->value != value) return node;
+
+        node = RemoveChecks(node);
+
+        return node;
+    }
+};
 
 int main()
 {
@@ -127,9 +197,16 @@ int main()
         values[i] = rand() % 100;
         tree.Head = tree.Insert(values[i], tree.Head);
     }
-    tree.LevelOrderTransversal();
-    std::cout << std::endl;
-    tree.InOrderTraversal(tree.Head);
+
+        tree.LevelOrderTransversal();
+    for (size_t i = 0; i < 10; i++)
+    {
+        tree.Head = tree.Remove(values[i], tree.Head);
+    
+        std::cout << std::endl;
+        tree.LevelOrderTransversal();
+        //tree.InOrderTraversal(tree.Head);
+    }
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
