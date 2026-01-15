@@ -96,6 +96,9 @@ struct BSTHeap
         {
             Node<T>* curr = storage.front();
             storage.pop();
+
+            if(curr == nullptr) continue;
+
             result.push(curr->priority);
 
             if (curr->left != nullptr)
@@ -158,8 +161,8 @@ struct BSTHeap
         }
         else
         {
-            // delete node;
-            // return nullptr;
+            delete node;
+            return nullptr;
         }
 
         return node;
@@ -191,14 +194,21 @@ int main()
 {
     BSTHeap<int> tree = BSTHeap<int>();
     int values[10];
+    srand(time(0)); // seed the random number generator
 
     for (size_t i = 0; i < 10; i++)
     {
         values[i] = rand() % 100;
         tree.Head = tree.Insert(values[i], tree.Head);
+        tree.InOrderTraversal(tree.Head);
+        std::cout << std::endl;
+        tree.LevelOrderTransversal();
+        std::cout << std::endl;
     }
 
-        tree.LevelOrderTransversal();
+        std::cout << std::endl;
+        std::cout << std::endl;
+
     for (size_t i = 0; i < 10; i++)
     {
         tree.Head = tree.Remove(values[i], tree.Head);
@@ -208,6 +218,11 @@ int main()
         //tree.InOrderTraversal(tree.Head);
     }
 }
+
+/*
+0 8 10 12 32 49 55 67 84 99 --> values
+24 34 30 93 39 40 47 99 44 83 --> priorities
+*/
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu
