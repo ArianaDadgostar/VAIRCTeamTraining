@@ -22,19 +22,13 @@ vex::controller Controller;
 
 /*
 AL = (pi)d * (theta/180)
-*/
 
-enum class drivePosition {
-    POSVERT,
-    POSHORIZ,
-    NEGVERT,
-    NEGHORIZ
-};
+dL - dR = (R + L)chTheta - (R - L)chTheta;
+*/
 
 int vertical = 0;
 int horizontal = 0;
-
-drivePosition currentPosition = drivePosition::POSVERT;
+int theta = 0;
 
 // define your global instances of motors and other devices here
 
@@ -68,98 +62,7 @@ void RunChassis()
     RunMotor(RightVal, BottomRight);
 }
 
-void RunChassisUpdated()
-{
-    if(Controller.ButtonX.pressing())
-}
 
-void AddToPosition(int theta)
-{
-    switch(currentPosition)
-    {
-        case drivePosition::POSVERT:
-        {
-            if(TopLeft.velocity(vex::percent) < 0 && theta >= 90)
-            {
-                currentPosition = drivePosition::NEGHORIZ;
-            }
-            else if(theta >= 90)
-            {
-                currentPosition = drivePosition::POSHORIZ;
-            }
-            else if(TopLeft.velocity(vex::percent) > 0 && TopRight.velocity(vex::percent) > 0)
-            {
-                vertical += TopLeft.velocity(vex::percent);
-            }
-
-            break;
-        }
-
-        case drivePosition::POSHORIZ:
-        {
-            if(TopLeft.velocity(vex::percent) < 0 && theta >= 90)
-            {
-                currentPosition = drivePosition::NEGVERT;
-            }
-            else if(theta >= 90)
-            {
-                currentPosition = drivePosition::POSVERT;
-            }
-            else if(TopLeft.velocity(vex::percent) > 0 && TopRight.velocity(vex::percent) > 0)
-            {
-                horizontal += TopLeft.velocity(vex::percent);
-            }
-
-            break;
-        }
-
-        case drivePosition::NEGVERT:
-        {
-            if(TopLeft.velocity(vex::percent) > 0 && theta >= 90)
-            {
-                currentPosition = drivePosition::POSHORIZ;
-            }
-            else if(theta >= 90)
-            {
-                currentPosition = drivePosition::NEGHORIZ;
-            }
-            else if(TopLeft.velocity(vex::percent) > 0 && TopRight.velocity(vex::percent) > 0)
-            {
-                vertical -= TopLeft.velocity(vex::percent);
-            }
-            vertical -= TopLeft.velocity(vex::percent);
-
-            break;
-        }
-
-        case drivePosition::NEGHORIZ:
-        {
-            if(TopLeft.velocity(vex::percent) > 0 && theta >= 90)
-            {
-                currentPosition = drivePosition::POSVERT;
-            }
-            else if(theta >= 90)
-            {
-                currentPosition = drivePosition::NEGVERT;
-            }
-            horizontal -= TopLeft.velocity(vex::percent);
-
-            break;
-        }
-    }
-}
-
-void CalculatePosition()
-{
-    if(TopLeft.velocity(vex::percent) > 0 && TopRight.velocity(vex::percent) > 0) return;
-    int AL = TopLeft.velocity(vex::percent);
-    int theta = AL / ( (3.14 * DIAMETER) / 180 );
-
-    if(theta < 90)
-    {
-        AddToPosition(theta);
-    }
-}
 
 void CalculateReturn()
 {
@@ -172,8 +75,6 @@ int main() {
    
     while(1) {
         RunChassis();
-
-        CalculatePosition();
 
         if(Controller.ButtonA.pressing())
         {
