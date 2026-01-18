@@ -80,6 +80,35 @@ public class BSTHeap <T> where T : IComparable<T>
         RemovalRemainsInsert(node.right);
     }
 
+    public void HeapifyUp(Node<T> node, Node<T> parent)
+    {
+        Node<T> replacement;
+        if(node.left != null && node.right != null)
+        {
+            if(node.left.priority < node.right.priority)
+            {
+                replacement = node.left;
+            }
+            else
+            {
+                replacement = node.right;
+            }
+        }
+        else if(node.left != null)
+        {
+            replacement = node.left;
+        }
+        else
+        {
+            replacement = node.right;
+        }
+
+        parent = node;
+        if(replacement == null) return;
+
+        HeapifyUp(replacement, node);
+    }
+
     public Node<T> RemoveChecks(Node<T> node)
     {
         if(node == null) return node;
@@ -89,10 +118,7 @@ public class BSTHeap <T> where T : IComparable<T>
             Node<T> nodeReplacement;
             if(node.left.priority <= node.right.priority)
             {
-                nodeReplacement = node.right;
-                node = node.left;
-                RemovalRemainsInsert(node.right);
-                node.right = nodeReplacement;
+
 
                 return node;
             }
@@ -129,9 +155,36 @@ public class BSTHeap <T> where T : IComparable<T>
         }
         else if(!node.value.Equals(value)) return node;
 
-        node = RemoveChecks(node);
+        node = NewRemoveChecks(node);
 
         return node;
+    }
+
+    public Node<T> NewRemoveChecks(Node<T> node)
+    {
+        node.priority = 100000;
+
+        node = TravelDown(node);
+
+        node = null;
+        return node;
+    }
+
+    public Node<T> TravelDown(Node<T> node)
+    {
+        if((node.left == null || node.left.priority >= node.priority)
+            && (node.right == null || node.right.priority >= node.priority)) return node;
+
+        if(node.left != null && node.left.priority < node.priority)
+        {
+            node = RotateRight(node);
+        }
+        else
+        {
+            node = RotateLeft(node);
+        }
+
+        return TravelDown(node);
     }
 
     public Node<T> Search(T value, Node<T> node)

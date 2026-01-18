@@ -128,6 +128,34 @@ struct BSTHeap
         RemovalRemainsInsert(node->right);
     }
 
+    
+    Node<T>* NewRemoveChecks(Node<T>* node)
+    {
+        node->priority = 100000;
+
+        node = TravelDown(node);
+
+        node = nullptr;
+        return node;
+    }
+
+    Node<T>* TravelDown(Node<T>* node)
+    {
+        if((node->left == nullptr || node->left->priority >= node->priority)
+            && (node->right == nullptr || node->right->priority >= node->priority)) return node;
+
+        if(node->left != nullptr && (node->right == nullptr || node->left->priority < node->right->priority))
+        {
+            node = RotateRight(node);
+            return TravelDown(node->right);
+        }
+        else
+        {
+            node = RotateLeft(node);
+            return TravelDown(node->left);
+        }
+    }
+
     Node<T>* RemoveChecks(Node<T>* node)
     {
         if(node == nullptr) return node;
@@ -184,7 +212,7 @@ struct BSTHeap
         }
         else if(node->value != value) return node;
 
-        node = RemoveChecks(node);
+        node = NewRemoveChecks(node);
 
         return node;
     }
@@ -196,26 +224,26 @@ int main()
     int values[10];
     srand(time(0)); // seed the random number generator
 
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < 3; i++)
     {
         values[i] = rand() % 100;
         tree.Head = tree.Insert(values[i], tree.Head);
-        tree.InOrderTraversal(tree.Head);
-        std::cout << std::endl;
-        tree.LevelOrderTransversal();
-        std::cout << std::endl;
+        // tree.InOrderTraversal(tree.Head);
+        // std::cout << std::endl;
+        // tree.LevelOrderTransversal();
+        // std::cout << std::endl;
     }
 
         std::cout << std::endl;
         std::cout << std::endl;
 
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < 3; i++)
     {
-        tree.Head = tree.Remove(values[i], tree.Head);
-    
         std::cout << std::endl;
         tree.LevelOrderTransversal();
-        //tree.InOrderTraversal(tree.Head);
+        tree.InOrderTraversal(tree.Head);
+        tree.Head = tree.Remove(values[i], tree.Head);
+    
     }
 }
 
