@@ -59,8 +59,8 @@ void RunMotor(int velocity, vex::motor motor)
 
 void RunChassis()
 {
-    int LeftVal = powerMap[Controller.Axis3.position()] + powerMap[Controller.Axis1.position()];
-    int RightVal = powerMap[Controller.Axis3.position()] - powerMap[Controller.Axis1.position()];
+    int LeftVal = powerMap[Controller.Axis3.position()]; //+ powerMap[Controller.Axis1.position()];
+    int RightVal = powerMap[Controller.Axis2.position()]; //- powerMap[Controller.Axis1.position()];
     
     RunMotor(LeftVal/5, TopLeft);
     RunMotor(RightVal/5, TopRight);
@@ -70,10 +70,10 @@ void RunChassis()
 
 void CalculateMovement()
 {
-    int dL = TopLeft.current(vex::percent);
-    int dR = TopRight.current(vex::percent);
-    int hypotenuse = (dL + dR) / 2;
-    int thetaChange = (dL - dR) / (2*ROBOTLENGTH);
+    float dL = TopLeft.current(vex::percent);
+    float dR = TopRight.current(vex::percent);
+    float hypotenuse = (dL + dR) / 2;
+    float thetaChange = (dL - dR) / (2*ROBOTLENGTH);
 
     vertical += hypotenuse * cos(theta + thetaChange/2);
     horizontal += hypotenuse * sin(theta + thetaChange/2);
@@ -88,31 +88,42 @@ void CalculateMovement()
 void CalculateReturn()
 {
     float returnVal = sqrt( (vertical * vertical) + (horizontal * horizontal) );
-    int returnAngle = atan2(horizontal, vertical) - theta;
+    float returnAngle = atan2(horizontal, vertical) - theta;
 
     printf("horizontal: %f\n", horizontal);
     printf("vertical: %f\n", vertical);
     printf("return val: %f\n", returnVal);
+    printf("return angle: %f\n", returnAngle);
+    printf("theta: %f\n", theta);
 
-    while(abs(TopLeft.position(vex::deg)) <= returnAngle && abs(TopRight.position(vex::deg)) <= returnAngle)
+    while(abs(TopLeft.position(vex::deg)) <= returnVal * cos(returnAngle) && abs(TopRight.position(vex::deg)) <= returnVal * sin(returnAngle))
     {
-        RunMotor( returnVal * cos(returnAngle), TopLeft );
-        RunMotor( returnVal * cos(returnAngle), BottomLeft );
-        RunMotor( returnVal * sin(returnAngle), TopRight );
-        RunMotor( returnVal * sin(returnAngle), BottomRight );
+        RunMotor( returnVal * cos(returnAngle)*10, TopLeft );
+        RunMotor( (returnVal * cos(returnAngle))*10, BottomLeft );
+        RunMotor( returnVal * sin(returnAngle)*10, TopRight );
+        RunMotor( returnVal * sin(returnAngle)*10, BottomRight );
     }
 
     while(abs(TopLeft.position(vex::deg)) <= returnVal && abs(TopRight.position(vex::deg)) <= returnVal)
     {
-        RunMotor( 50, TopLeft );
-        RunMotor( 50, BottomLeft );
-        RunMotor( 50, TopRight );
-        RunMotor( 50, BottomRight );
+        RunMotor( -20, TopLeft );
+        RunMotor( -20, BottomLeft );
+        RunMotor( -20, TopRight );
+        RunMotor( -20, BottomRight );
     }
+
+    RunMotor(0, TopLeft);
+    RunMotor(0, BottomLeft);
+    RunMotor(0, TopRight);
+    RunMotor(0, BottomRight);
 }
 
 int main() {
 
+    TopLeft.resetPosition();
+    TopRight.resetPosition();
+    BottomLeft.resetPosition();
+    BottomRight.resetPosition();
     printf( "Hello V5" );
    
     while(1) {
@@ -122,8 +133,15 @@ int main() {
         if(Controller.ButtonA.pressing())
         {
             thread bg(CalculateReturn);
+            break;
         }
         // Allow other tasks to run
+        this_thread::sleep_for(10);
+    }
+
+    while(true)
+    {
+        CalculateReturn();
         this_thread::sleep_for(10);
     }
 }
