@@ -27,23 +27,34 @@ struct BSTHeap
 
     Node<T>* RotateLeft(Node<T>* node)
     {
-        Node<T>* newLeft = node->right->left;
+        Node<T>* newRight = node->right->left;
         Node<T>* newParent = node->right;
-        newParent->left = node;
-        node->right = newLeft;
+        newParent->left = new Node<T>(node->value, node->priority);
+        newParent->left->left = node->left;
 
-        return newParent;
+        delete node;
+
+        node = newParent;
+        node->left->right = newRight;
+        //node->right = newLeft;
+
+        return node;
     }
 
 
     Node<T>* RotateRight(Node<T>* node)
     {
-        Node<T>* newRight = node->left->right;
+        Node<T>* newLeft = node->left->right;
         Node<T>* newParent = node->left;
-        newParent->right = node;
-        node->left = newRight;
+        newParent->right = new Node<T>(node->value, node->priority);
+        newParent->right->right = node->right;
 
-        return newParent;
+        delete node;
+
+        node = newParent;
+        node->right->left = newLeft;
+
+        return node;
     }
 
     Node<T>* Insert(T value, Node<T>* node)
@@ -133,26 +144,32 @@ struct BSTHeap
     {
         node->priority = 100000;
 
-        node = TravelDown(node);
+        node = TravelDown(node); // returning node, so returning child but also has to so deletion works, so idk?
 
-        node = nullptr;
         return node;
     }
 
     Node<T>* TravelDown(Node<T>* node)
     {
         if((node->left == nullptr || node->left->priority >= node->priority)
-            && (node->right == nullptr || node->right->priority >= node->priority)) return node;
+            && (node->right == nullptr || node->right->priority >= node->priority))
+            {
+                node = nullptr;
+                delete node;
+                return node;
+            }
 
         if(node->left != nullptr && (node->right == nullptr || node->left->priority < node->right->priority))
         {
             node = RotateRight(node);
-            return TravelDown(node->right);
+            node->right = TravelDown(node->right);
+            return node;
         }
         else
         {
             node = RotateLeft(node);
-            return TravelDown(node->left);
+            node->left = TravelDown(node->left);
+            return node;
         }
     }
 
@@ -222,9 +239,10 @@ int main()
 {
     BSTHeap<int> tree = BSTHeap<int>();
     int values[10];
+    int set[3] = { 0, 49, 72 };
     srand(time(0)); // seed the random number generator
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 10; i++)
     {
         values[i] = rand() % 100;
         tree.Head = tree.Insert(values[i], tree.Head);
@@ -237,19 +255,21 @@ int main()
         std::cout << std::endl;
         std::cout << std::endl;
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 10; i++)
     {
         std::cout << std::endl;
-        tree.LevelOrderTransversal();
+        //tree.LevelOrderTransversal();
         tree.InOrderTraversal(tree.Head);
         tree.Head = tree.Remove(values[i], tree.Head);
-    
+    ;
     }
 }
 
 /*
 0 8 10 12 32 49 55 67 84 99 --> values
 24 34 30 93 39 40 47 99 44 83 --> priorities
+
+0 49 72
 */
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
