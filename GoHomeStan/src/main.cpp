@@ -7,34 +7,34 @@
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 #include "vex.h"
-#define DIAMETER 10
+#define DIAMETER 4
+#define ROBOTLENGTH 10
 
 using namespace vex;
 
 // A global instance of vex::brain used for printing to the V5 brain screen
 vex::brain       Brain;
-vex::motor       TopLeft( vex::PORT16, vex::gearSetting::ratio18_1, true );
-vex::motor       TopRight( vex::PORT15, vex::gearSetting::ratio18_1, false );
+// vex::motor       TopLeft( vex::PORT16, vex::gearSetting::ratio18_1, true );
+// vex::motor       TopRight( vex::PORT15, vex::gearSetting::ratio18_1, false );
+// vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, false );
+// vex::motor       BottomRight( vex::PORT11, vex::gearSetting::ratio18_1, true );
+vex::motor       TopLeft( vex::PORT19, vex::gearSetting::ratio18_1, false );
+vex::motor       TopRight( vex::PORT9, vex::gearSetting::ratio18_1, true );
 vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, false );
-vex::motor       BottomRight( vex::PORT11, vex::gearSetting::ratio18_1, true );
+vex::motor       BottomRight( vex::PORT10, vex::gearSetting::ratio18_1, true );
+
 
 vex::controller Controller;
 
 /*
-AL = (pi)d * (theta/180)
+AL = (pi)r * (theta/180)
+
+dL - dR = (R + L)chTheta - (R - L)chTheta;
 */
 
-enum class drivePosition {
-    POSVERT,
-    POSHORIZ,
-    NEGVERT,
-    NEGHORIZ
-};
-
-int vertical = 0;
-int horizontal = 0;
-
-drivePosition currentPosition = drivePosition::POSVERT;
+float vertical = 0;
+float horizontal = 0;
+float theta = 0;
 
 // define your global instances of motors and other devices here
 
@@ -59,127 +59,89 @@ void RunMotor(int velocity, vex::motor motor)
 
 void RunChassis()
 {
-    int LeftVal = powerMap[Controller.Axis3.position()] + powerMap[Controller.Axis1.position()];
-    int RightVal = powerMap[Controller.Axis3.position()] - powerMap[Controller.Axis1.position()];
+    int LeftVal = powerMap[Controller.Axis3.position()]; //+ powerMap[Controller.Axis1.position()];
+    int RightVal = powerMap[Controller.Axis2.position()]; //- powerMap[Controller.Axis1.position()];
     
-    RunMotor(LeftVal, TopLeft);
-    RunMotor(RightVal, TopRight);
-    RunMotor(LeftVal, BottomLeft);
-    RunMotor(RightVal, BottomRight);
+    RunMotor(LeftVal/5, TopLeft);
+    RunMotor(RightVal/5, TopRight);
+    RunMotor(LeftVal/5, BottomLeft);
+    RunMotor(RightVal/5, BottomRight);
 }
 
-void RunChassisUpdated()
+void CalculateMovement()
 {
-    if(Controller.ButtonX.pressing())
-}
+    float dL = TopLeft.current(vex::percent);
+    float dR = TopRight.current(vex::percent);
+    float hypotenuse = (dL + dR) / 2;
+    float thetaChange = (dL - dR) / (2*ROBOTLENGTH);
 
-void AddToPosition(int theta)
-{
-    switch(currentPosition)
-    {
-        case drivePosition::POSVERT:
-        {
-            if(TopLeft.velocity(vex::percent) < 0 && theta >= 90)
-            {
-                currentPosition = drivePosition::NEGHORIZ;
-            }
-            else if(theta >= 90)
-            {
-                currentPosition = drivePosition::POSHORIZ;
-            }
-            else if(TopLeft.velocity(vex::percent) > 0 && TopRight.velocity(vex::percent) > 0)
-            {
-                vertical += TopLeft.velocity(vex::percent);
-            }
+    vertical += hypotenuse * cos(theta + thetaChange/2);
+    horizontal += hypotenuse * sin(theta + thetaChange/2);
+    theta += thetaChange;
 
-            break;
-        }
-
-        case drivePosition::POSHORIZ:
-        {
-            if(TopLeft.velocity(vex::percent) < 0 && theta >= 90)
-            {
-                currentPosition = drivePosition::NEGVERT;
-            }
-            else if(theta >= 90)
-            {
-                currentPosition = drivePosition::POSVERT;
-            }
-            else if(TopLeft.velocity(vex::percent) > 0 && TopRight.velocity(vex::percent) > 0)
-            {
-                horizontal += TopLeft.velocity(vex::percent);
-            }
-
-            break;
-        }
-
-        case drivePosition::NEGVERT:
-        {
-            if(TopLeft.velocity(vex::percent) > 0 && theta >= 90)
-            {
-                currentPosition = drivePosition::POSHORIZ;
-            }
-            else if(theta >= 90)
-            {
-                currentPosition = drivePosition::NEGHORIZ;
-            }
-            else if(TopLeft.velocity(vex::percent) > 0 && TopRight.velocity(vex::percent) > 0)
-            {
-                vertical -= TopLeft.velocity(vex::percent);
-            }
-            vertical -= TopLeft.velocity(vex::percent);
-
-            break;
-        }
-
-        case drivePosition::NEGHORIZ:
-        {
-            if(TopLeft.velocity(vex::percent) > 0 && theta >= 90)
-            {
-                currentPosition = drivePosition::POSVERT;
-            }
-            else if(theta >= 90)
-            {
-                currentPosition = drivePosition::NEGVERT;
-            }
-            horizontal -= TopLeft.velocity(vex::percent);
-
-            break;
-        }
-    }
-}
-
-void CalculatePosition()
-{
-    if(TopLeft.velocity(vex::percent) > 0 && TopRight.velocity(vex::percent) > 0) return;
-    int AL = TopLeft.velocity(vex::percent);
-    int theta = AL / ( (3.14 * DIAMETER) / 180 );
-
-    if(theta < 90)
-    {
-        AddToPosition(theta);
-    }
+    TopLeft.resetPosition();
+    TopRight.resetPosition();
+    BottomLeft.resetPosition();
+    BottomRight.resetPosition();
 }
 
 void CalculateReturn()
 {
-    int returnVal = sqrt( (vertical * vertical) + (horizontal * horizontal) );
+    float returnVal = sqrt( (vertical * vertical) + (horizontal * horizontal) );
+    float returnAngle = atan2(horizontal, vertical) - theta;
+
+    printf("horizontal: %f\n", horizontal);
+    printf("vertical: %f\n", vertical);
+    printf("return val: %f\n", returnVal);
+    printf("return angle: %f\n", returnAngle);
+    printf("theta: %f\n", theta);
+
+    while(abs(TopLeft.position(vex::deg)) <= returnVal * cos(returnAngle) && abs(TopRight.position(vex::deg)) <= returnVal * sin(returnAngle))
+    {
+        RunMotor( returnVal * cos(returnAngle)*10, TopLeft );
+        RunMotor( (returnVal * cos(returnAngle))*10, BottomLeft );
+        RunMotor( returnVal * sin(returnAngle)*10, TopRight );
+        RunMotor( returnVal * sin(returnAngle)*10, BottomRight );
+    }
+
+    while(abs(TopLeft.position(vex::deg)) <= returnVal && abs(TopRight.position(vex::deg)) <= returnVal)
+    {
+        RunMotor( -20, TopLeft );
+        RunMotor( -20, BottomLeft );
+        RunMotor( -20, TopRight );
+        RunMotor( -20, BottomRight );
+    }
+
+    RunMotor(0, TopLeft);
+    RunMotor(0, BottomLeft);
+    RunMotor(0, TopRight);
+    RunMotor(0, BottomRight);
 }
 
 int main() {
 
+    TopLeft.resetPosition();
+    TopRight.resetPosition();
+    BottomLeft.resetPosition();
+    BottomRight.resetPosition();
     printf( "Hello V5" );
    
     while(1) {
         RunChassis();
-
-        CalculatePosition();
+        CalculateMovement();
 
         if(Controller.ButtonA.pressing())
         {
-
+            thread bg(CalculateReturn);
+            break;
         }
         // Allow other tasks to run
+        this_thread::sleep_for(10);
+    }
+
+    while(true)
+    {
+        CalculateReturn();
         this_thread::sleep_for(10);
     }
 }
