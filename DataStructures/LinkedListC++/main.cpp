@@ -106,6 +106,24 @@ struct LinkedList
     }
 };
 
+void PrintList(Node<int>* head, int level)
+{
+    Node<int>* temp = head;
+    while(temp != nullptr)
+    {
+        for(int i = 0; i < level; i++)
+        {
+            std::cout << "  ";
+        }
+        std::cout << temp->value << "\n";
+        if(temp->child != nullptr)
+        {
+            PrintList(temp->child->Head, level + 1);
+        }
+        temp = temp->next;
+    }
+}
+
 int main() 
 {
     srand(time(0));
@@ -131,6 +149,8 @@ int main()
         }
         temp = temp->next;
     }
+
+    PrintList(list.Head, 0);
 
     list.NewGetValue();
 
