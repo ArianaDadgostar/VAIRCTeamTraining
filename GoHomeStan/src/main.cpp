@@ -39,6 +39,10 @@ float theta = 0;
 float returnVal;
 float returnAngle;
 
+
+float leftVal;
+float rightVal;
+
 // define your global instances of motors and other devices here
 
 int powerMap[127] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -98,7 +102,8 @@ void CalculateMovement()
 bool CalculateReturn()
 {
     returnVal = sqrt( (vertical * vertical) + (horizontal * horizontal) );
-    returnAngle = atan2(horizontal, vertical) - theta;
+    //returnAngle = atan2(horizontal, vertical) - theta;
+    returnAngle = 360 - theta;
     printf("LEFT: %f\n", TopLeft.position(vex::deg));
     printf("RIGHT: %f\n", TopRight.position(vex::deg));
 
@@ -106,28 +111,11 @@ bool CalculateReturn()
     // printf("vertical: %f\n", vertical);
     // printf("return val: %f\n", returnVal);
     // printf("return angle: %f\n", returnVal * cos(returnAngle)*10);
-        float leftVal = (ROBOTLENGTH * returnAngle) / RADIUS;
-        float rightVal = (ROBOTLENGTH * returnAngle * -1) / RADIUS;
+        leftVal = (ROBOTLENGTH * returnAngle) / RADIUS;
+        rightVal = (ROBOTLENGTH * returnAngle * -1) / RADIUS;
         
     // printf("maybe its this %f\n", leftVal);
 
-    while(abs(TopLeft.position(vex::deg)) <= abs(leftVal) && abs(TopRight.position(vex::deg)) <= abs(rightVal))
-    {
-    printf("LEFT: %f\n", TopLeft.position(vex::deg));
-    printf("RIGHT: %f\n", TopRight.position(vex::deg));
-    printf("LEFTVAL: %f\n", leftVal);
-    printf("RIGHTAL: %f\n", rightVal);
-        //printf("oml what is not working cuh\n");
-        //leftVal = ((returnVal * cos(returnAngle))/abs(returnVal * cos(returnAngle))) * 120;
-        leftVal = (ROBOTLENGTH * returnAngle) / RADIUS;
-        RunMotor( leftVal, TopLeft );
-        RunMotor( leftVal, BottomLeft );
-
-
-        rightVal = (ROBOTLENGTH * returnAngle * -1) / RADIUS;
-        RunMotor( rightVal, TopRight );
-        RunMotor( rightVal, BottomRight );
-    }
 
     //int rightVal = (ROBOTLENGTH * returnAngle) / RADIUS;
 
@@ -148,6 +136,28 @@ bool CalculateReturn()
     // RunMotor(0, BottomLeft);
     // RunMotor(0, TopRight);
     // RunMotor(0, BottomRight);
+}
+
+bool ReturnedAngle()
+{
+    if(abs(TopLeft.position(vex::deg)) >= abs(leftVal) && abs(TopRight.position(vex::deg)) >= abs(rightVal)) return true;
+    printf("LEFT: %f\n", TopLeft.position(vex::deg));
+    printf("RIGHT: %f\n", TopRight.position(vex::deg));
+    printf("LEFTVAL: %f\n", leftVal);
+    printf("RIGHTAL: %f\n", rightVal);
+
+    //printf("oml what is not working cuh\n");
+    //leftVal = ((returnVal * cos(returnAngle))/abs(returnVal * cos(returnAngle))) * 120;
+    leftVal = (ROBOTLENGTH * returnAngle) / RADIUS;
+    RunMotor( leftVal, TopLeft );
+    RunMotor( leftVal, BottomLeft );
+
+
+    rightVal = (ROBOTLENGTH * returnAngle * -1) / RADIUS;
+    RunMotor( rightVal, TopRight );
+    RunMotor( rightVal, BottomRight );
+
+    return false;
 }
 
 bool MoveToOrigin()
@@ -182,14 +192,14 @@ int main() {
         this_thread::sleep_for(10);
     }
 
-    while(true)
-    {
-        if(CalculateReturn())
-        {
-            break;
-        }
-        this_thread::sleep_for(10);
-    }
+    CalculateReturn();
+
+    TopLeft.resetPosition();
+    TopRight.resetPosition();
+    BottomLeft.resetPosition();
+    BottomRight.resetPosition();
+
+    while(!ReturnedAngle()) this_thread::sleep_for(10);
 
     TopLeft.resetPosition();
     TopRight.resetPosition();
