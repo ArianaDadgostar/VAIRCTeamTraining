@@ -9,6 +9,7 @@
 #include "vex.h"
 #define RADIUS 2
 #define ROBOTLENGTH 15
+#define ROBOTRADIUS 6
 
 using namespace vex;
 
@@ -35,6 +36,7 @@ dL - dR = (R + L)chTheta - (R - L)chTheta;
 float vertical = 0;
 float horizontal = 0;
 float theta = 0;
+float returnTheta = 0;
 
 float returnVal;
 float returnAngle;
@@ -81,11 +83,11 @@ void CalculateMovement()
     float dR = TopRight.current(vex::percent);
     float hypotenuse = (dL + dR) / 2;
     //float thetaChange = (DIAMETER/2) * (dL - dR) / (2*ROBOTLENGTH); NOT WORKING
-    float thetaChange = ((RADIUS) * (dL - dR)) / ROBOTLENGTH;
+    float thetaChange = ((RADIUS) * (dL - dR)) / (2*ROBOTRADIUS); //USED TO BE ROBOTLENGTH
 
     theta += thetaChange;
-    vertical += hypotenuse * cos(theta);
-    horizontal += hypotenuse * sin(theta);
+    vertical += ROBOTLENGTH * sin(thetaChange);
+    horizontal += ROBOTLENGTH * (1 - cos(thetaChange));
 
 
     printf("vertical: %f\n", vertical);
@@ -99,43 +101,30 @@ void CalculateMovement()
     vex::this_thread::sleep_for(20);
 }
 
-bool CalculateReturn()
+bool ReturnedAngleUpdated()
 {
-    returnVal = sqrt( (vertical * vertical) + (horizontal * horizontal) );
-    //returnAngle = atan2(horizontal, vertical) - theta;
-    returnAngle = 360 - theta;
-    printf("LEFT: %f\n", TopLeft.position(vex::deg));
-    printf("RIGHT: %f\n", TopRight.position(vex::deg));
+    float dL = TopLeft.current(vex::percent);
+    float dR = TopRight.current(vex::percent);
+    if((abs(theta) < 180 && abs(returnTheta) >= abs(theta)) || (abs(returnTheta) > (360 - abs(theta)))) return true;
+    float thetaChange = ((RADIUS) * (dL - dR)) / (ROBOTLENGTH); //USED TO BE ROBOTLENGTH
+    returnTheta += thetaChange;
 
-    // printf("horizontal: %f\n", horizontal);
-    // printf("vertical: %f\n", vertical);
-    // printf("return val: %f\n", returnVal);
-    // printf("return angle: %f\n", returnVal * cos(returnAngle)*10);
-        leftVal = (ROBOTLENGTH * returnAngle) / RADIUS;
-        rightVal = (ROBOTLENGTH * returnAngle * -1) / RADIUS;
-        
-    // printf("maybe its this %f\n", leftVal);
-
-
-    //int rightVal = (ROBOTLENGTH * returnAngle) / RADIUS;
-
-    // while (abs(TopRight.position(vex::deg)) <= abs(rightVal))
-    // {
-    //     //int rightVal = ((returnVal * sin(returnAngle))/abs(returnVal * sin(returnAngle))) * 120;
-
-    // }
-
-    if(abs(TopLeft.position(vex::deg)) > returnVal * cos(returnAngle) && abs(TopRight.position(vex::deg)) > returnVal * sin(returnAngle))
+    if(theta > 180)
     {
-        return true;
+        RunMotor( -theta, TopLeft );
+        RunMotor( -theta, BottomLeft );
+        RunMotor( theta, BottomLeft );
+        RunMotor( theta, BottomRight );
+    }
+    else
+    {
+        RunMotor( theta, TopLeft );
+        RunMotor( theta, BottomLeft );
+        RunMotor( -theta, BottomLeft );
+        RunMotor( -theta, BottomRight );
     }
 
     return false;
-
-    // RunMotor(0, TopLeft);
-    // RunMotor(0, BottomLeft);
-    // RunMotor(0, TopRight);
-    // RunMotor(0, BottomRight);
 }
 
 bool ReturnedAngle()
@@ -146,8 +135,6 @@ bool ReturnedAngle()
     printf("LEFTVAL: %f\n", leftVal);
     printf("RIGHTAL: %f\n", rightVal);
 
-    //printf("oml what is not working cuh\n");
-    //leftVal = ((returnVal * cos(returnAngle))/abs(returnVal * cos(returnAngle))) * 120;
     leftVal = (ROBOTLENGTH * returnAngle) / RADIUS;
     RunMotor( leftVal, TopLeft );
     RunMotor( leftVal, BottomLeft );
@@ -192,14 +179,14 @@ int main() {
         this_thread::sleep_for(10);
     }
 
-    CalculateReturn();
+    //CalculateReturn();
 
     TopLeft.resetPosition();
     TopRight.resetPosition();
     BottomLeft.resetPosition();
     BottomRight.resetPosition();
 
-    while(!ReturnedAngle()) this_thread::sleep_for(10);
+    while(!ReturnedAngleUpdated()) this_thread::sleep_for(10);
 
     TopLeft.resetPosition();
     TopRight.resetPosition();
