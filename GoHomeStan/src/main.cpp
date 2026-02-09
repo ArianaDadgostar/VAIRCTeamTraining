@@ -15,14 +15,14 @@ using namespace vex;
 
 // A global instance of vex::brain used for printing to the V5 brain screen
 vex::brain       Brain;
-// vex::motor       TopLeft( vex::PORT16, vex::gearSetting::ratio18_1, true );
-// vex::motor       TopRight( vex::PORT15, vex::gearSetting::ratio18_1, false );
+vex::motor       TopLeft( vex::PORT16, vex::gearSetting::ratio18_1, true );
+vex::motor       TopRight( vex::PORT15, vex::gearSetting::ratio18_1, false );
+vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, true );
+vex::motor       BottomRight( vex::PORT11, vex::gearSetting::ratio18_1, false );
+// vex::motor       TopLeft( vex::PORT19, vex::gearSetting::ratio18_1, false );
+// vex::motor       TopRight( vex::PORT9, vex::gearSetting::ratio18_1, true );
 // vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, false );
-// vex::motor       BottomRight( vex::PORT11, vex::gearSetting::ratio18_1, true );
-vex::motor       TopLeft( vex::PORT19, vex::gearSetting::ratio18_1, false );
-vex::motor       TopRight( vex::PORT9, vex::gearSetting::ratio18_1, true );
-vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, false );
-vex::motor       BottomRight( vex::PORT10, vex::gearSetting::ratio18_1, true );
+// vex::motor       BottomRight( vex::PORT10, vex::gearSetting::ratio18_1, true );
 
 
 vex::controller Controller;
@@ -44,6 +44,8 @@ float returnAngle;
 
 float leftVal;
 float rightVal;
+
+float TopRightAccumulated = 0;
 
 // define your global instances of motors and other devices here
 
@@ -71,16 +73,17 @@ void RunChassis()
     int LeftVal = powerMap[Controller.Axis3.position()]; //+ powerMap[Controller.Axis1.position()];
     int RightVal = powerMap[Controller.Axis2.position()]; //- powerMap[Controller.Axis1.position()];
     
-    RunMotor(LeftVal/5, TopLeft);
-    RunMotor(RightVal/5, TopRight);
-    RunMotor(LeftVal/5, BottomLeft);
-    RunMotor(RightVal/5, BottomRight);
+    RunMotor(Controller.Axis3.position()/5, TopLeft);
+    RunMotor(Controller.Axis2.position()/5, TopRight);
+    RunMotor(Controller.Axis3.position()/5, BottomLeft);
+    RunMotor(Controller.Axis2.position()/5, BottomRight);
 }
 
 void CalculateMovement()
 {
     float dL = TopLeft.current(vex::percent);
     float dR = TopRight.current(vex::percent);
+    TopRightAccumulated += dR;
     float hypotenuse = (dL + dR) / 2;
     //float thetaChange = (DIAMETER/2) * (dL - dR) / (2*ROBOTLENGTH); NOT WORKING
     float thetaChange = ((RADIUS) * (dL - dR)) / (2*ROBOTRADIUS); //USED TO BE ROBOTLENGTH
@@ -89,10 +92,13 @@ void CalculateMovement()
     vertical += ROBOTLENGTH * sin(thetaChange);
     horizontal += ROBOTLENGTH * (1 - cos(thetaChange));
 
-
-    printf("vertical: %f\n", vertical);
-    printf("horizontal: %f\n", horizontal);
-    printf("theta: %f\n", theta);
+    if(ROBOTLENGTH * sin(thetaChange) != 0 || ROBOTLENGTH * (1 - cos(thetaChange)) != 0)
+    {
+        printf("vertical: %f\n", vertical);
+        printf("horizontal: %f\n", horizontal);
+        printf("topright: %f\n", TopRightAccumulated);
+        //printf("theta: %f\n", theta);
+    }
 
     TopLeft.resetPosition();
     TopRight.resetPosition();
@@ -107,20 +113,21 @@ bool ReturnedAngleUpdated()
     float dR = TopRight.current(vex::percent);
     if((abs(theta) < 180 && abs(returnTheta) >= abs(theta)) || (abs(returnTheta) > (360 - abs(theta)))) return true;
     float thetaChange = ((RADIUS) * (dL - dR)) / (ROBOTLENGTH); //USED TO BE ROBOTLENGTH
+    printf("RETURNTHETA: %f\n", returnTheta);
     returnTheta += thetaChange;
 
     if(theta > 180)
     {
         RunMotor( -theta, TopLeft );
         RunMotor( -theta, BottomLeft );
-        RunMotor( theta, BottomLeft );
+        RunMotor( theta, TopRight );
         RunMotor( theta, BottomRight );
     }
     else
     {
         RunMotor( theta, TopLeft );
         RunMotor( theta, BottomLeft );
-        RunMotor( -theta, BottomLeft );
+        RunMotor( -theta, TopRight );
         RunMotor( -theta, BottomRight );
     }
 
