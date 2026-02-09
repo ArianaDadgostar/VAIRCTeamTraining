@@ -19,10 +19,10 @@ vex::brain       Brain;
 // vex::motor       TopRight( vex::PORT15, vex::gearSetting::ratio18_1, false );
 // vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, true );
 // vex::motor       BottomRight( vex::PORT11, vex::gearSetting::ratio18_1, false );
-vex::motor       TopLeft( vex::PORT19, vex::gearSetting::ratio18_1, false );
-vex::motor       TopRight( vex::PORT9, vex::gearSetting::ratio18_1, true );
-vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, false );
-vex::motor       BottomRight( vex::PORT10, vex::gearSetting::ratio18_1, true );
+vex::motor       TopLeft( vex::PORT19, false );
+vex::motor       TopRight( vex::PORT9, true );
+vex::motor       BottomLeft( vex::PORT20, false );
+vex::motor       BottomRight( vex::PORT10, true );
 
 
 vex::controller Controller;
@@ -39,7 +39,7 @@ float theta = 0;
 float returnTheta = 0;
 
 float returnVal;
-float returnAngle;
+//float returnAngle;
 
 
 float leftVal;
@@ -70,19 +70,21 @@ void RunMotor(int velocity, vex::motor motor)
 
 void ReturnAngleCalculatedNew()
 {
-    float dL = TopLeft.current(vex::percent);
-    float dR = TopRight.current(vex::percent);
+    float dL = TopLeft.position(vex::deg);
+    float dR = TopRight.position(vex::deg);
     float thetaChange = ((dL - dR) * 2 * RADIUS * 3.14159265358979323846) / 360;
-    thetaChange /= (2 * ROBOTRADIUS * 3.14159265358979323846);
+    thetaChange /= (2 * ROBOTLENGTH * 3.14159265358979323846);
     thetaChange *= 360;
 
-    returnAngle += thetaChange;
+    theta += thetaChange;
+    vertical += ROBOTLENGTH * sin(thetaChange);
+    horizontal += ROBOTLENGTH * (1 - cos(thetaChange));
 
     if(ROBOTLENGTH * sin(thetaChange) != 0 || ROBOTLENGTH * (1 - cos(thetaChange)) != 0)
     {
-        printf("dl: %f\n", dL);
-        printf("dr: %f\n", dR);
-        //printf("theta: %f\n", theta);
+        printf("vertical: %f\n", vertical);
+        printf("horizontal: %f\n", horizontal);
+        printf("theta: %f\n", theta);
     }
 
     TopLeft.resetPosition();
@@ -102,56 +104,46 @@ void RunChassis()
     RunMotor(Controller.Axis2.position()/5, BottomRight);
 }
 
-void CalculateMovement()
+void EstablishReturnVal()
 {
-    float dL = TopLeft.current(vex::percent);
-    float dR = TopRight.current(vex::percent);
-    TopRightAccumulated += dR;
-    float hypotenuse = (dL + dR) / 2;
-    //float thetaChange = (DIAMETER/2) * (dL - dR) / (2*ROBOTLENGTH); NOT WORKING
-    float thetaChange = ((RADIUS) * (dL - dR)) / (2*ROBOTRADIUS); //USED TO BE ROBOTLENGTH
-
-    theta += thetaChange;
-    vertical += ROBOTLENGTH * sin(thetaChange);
-    horizontal += ROBOTLENGTH * (1 - cos(thetaChange));
-
-    if(ROBOTLENGTH * sin(thetaChange) != 0 || ROBOTLENGTH * (1 - cos(thetaChange)) != 0)
+    if(theta < 180)
     {
-        printf("vertical: %f\n", vertical);
-        printf("horizontal: %f\n", horizontal);
-        printf("topright: %f\n", TopRightAccumulated);
-        //printf("theta: %f\n", theta);
+        returnVal = 180 - theta;
     }
-
-    TopLeft.resetPosition();
-    TopRight.resetPosition();
-    BottomLeft.resetPosition();
-    BottomRight.resetPosition();
-    vex::this_thread::sleep_for(20);
+    else
+    {
+        returnVal = -1 * theta;
+    }
 }
 
 bool ReturnedAngleUpdated()
 {
     float dL = TopLeft.current(vex::percent);
     float dR = TopRight.current(vex::percent);
-    if((abs(theta) < 180 && abs(returnTheta) >= abs(theta)) || (abs(returnTheta) > (360 - abs(theta)))) return true;
-    float thetaChange = ((RADIUS) * (dL - dR)) / (ROBOTLENGTH); //USED TO BE ROBOTLENGTH
-    printf("RETURNTHETA: %f\n", returnTheta);
+    float thetaChange = ((dL - dR) * 2 * RADIUS * 3.14159265358979323846) / 360;
+    thetaChange /= (2 * ROBOTLENGTH * 3.14159265358979323846);
+    thetaChange *= 360;
     returnTheta += thetaChange;
 
-    if(theta > 180)
+    printf("lala\n");
+
+    if(abs(returnTheta) >= abs(returnVal)) return true;
+
+    float absTheta = abs(theta);
+
+    if(absTheta > 180)
     {
-        RunMotor( -theta, TopLeft );
-        RunMotor( -theta, BottomLeft );
-        RunMotor( theta, TopRight );
-        RunMotor( theta, BottomRight );
+        RunMotor( -absTheta, TopLeft );
+        RunMotor( -absTheta, BottomLeft );
+        RunMotor( absTheta, TopRight );
+        RunMotor( absTheta, BottomRight );
     }
     else
     {
-        RunMotor( theta, TopLeft );
-        RunMotor( theta, BottomLeft );
-        RunMotor( -theta, TopRight );
-        RunMotor( -theta, BottomRight );
+        RunMotor( absTheta, TopLeft );
+        RunMotor( absTheta, BottomLeft );
+        RunMotor( -absTheta, TopRight );
+        RunMotor( -absTheta, BottomRight );
     }
 
     return false;
@@ -181,8 +173,10 @@ int main() {
         RunChassis();
         ReturnAngleCalculatedNew();
 
+            printf("nothing works \n");
         if(Controller.ButtonA.pressing())
         {
+            printf("ew\n");
             break;
         }
         // Allow other tasks to run
@@ -197,6 +191,8 @@ int main() {
     BottomRight.resetPosition();
 
     while(!ReturnedAngleUpdated()) this_thread::sleep_for(10);
+
+    printf("brother what\n");
 
     TopLeft.resetPosition();
     TopRight.resetPosition();
