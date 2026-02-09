@@ -15,14 +15,14 @@ using namespace vex;
 
 // A global instance of vex::brain used for printing to the V5 brain screen
 vex::brain       Brain;
-vex::motor       TopLeft( vex::PORT16, vex::gearSetting::ratio18_1, true );
-vex::motor       TopRight( vex::PORT15, vex::gearSetting::ratio18_1, false );
-vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, true );
-vex::motor       BottomRight( vex::PORT11, vex::gearSetting::ratio18_1, false );
-// vex::motor       TopLeft( vex::PORT19, vex::gearSetting::ratio18_1, false );
-// vex::motor       TopRight( vex::PORT9, vex::gearSetting::ratio18_1, true );
-// vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, false );
-// vex::motor       BottomRight( vex::PORT10, vex::gearSetting::ratio18_1, true );
+// vex::motor       TopLeft( vex::PORT16, vex::gearSetting::ratio18_1, true );
+// vex::motor       TopRight( vex::PORT15, vex::gearSetting::ratio18_1, false );
+// vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, true );
+// vex::motor       BottomRight( vex::PORT11, vex::gearSetting::ratio18_1, false );
+vex::motor       TopLeft( vex::PORT19, vex::gearSetting::ratio18_1, false );
+vex::motor       TopRight( vex::PORT9, vex::gearSetting::ratio18_1, true );
+vex::motor       BottomLeft( vex::PORT20, vex::gearSetting::ratio18_1, false );
+vex::motor       BottomRight( vex::PORT10, vex::gearSetting::ratio18_1, true );
 
 
 vex::controller Controller;
@@ -66,6 +66,29 @@ int powerMap[127] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 void RunMotor(int velocity, vex::motor motor)
 {
     motor.spin(vex::directionType::fwd, velocity, vex::velocityUnits::pct);
+}
+
+void ReturnAngleCalculatedNew()
+{
+    float dL = TopLeft.current(vex::percent);
+    float dR = TopRight.current(vex::percent);
+    float thetaChange = ((dL - dR) * 2 * RADIUS * 3.14159265358979323846) / 360;
+    thetaChange /= (2 * ROBOTRADIUS * 3.14159265358979323846);
+    thetaChange *= 360;
+
+    returnAngle += thetaChange;
+
+    if(ROBOTLENGTH * sin(thetaChange) != 0 || ROBOTLENGTH * (1 - cos(thetaChange)) != 0)
+    {
+        printf("dl: %f\n", dL);
+        printf("dr: %f\n", dR);
+        //printf("theta: %f\n", theta);
+    }
+
+    TopLeft.resetPosition();
+    TopRight.resetPosition();
+    BottomLeft.resetPosition();
+    BottomRight.resetPosition();
 }
 
 void RunChassis()
@@ -134,26 +157,6 @@ bool ReturnedAngleUpdated()
     return false;
 }
 
-bool ReturnedAngle()
-{
-    if(abs(TopLeft.position(vex::deg)) >= abs(leftVal) && abs(TopRight.position(vex::deg)) >= abs(rightVal)) return true;
-    printf("LEFT: %f\n", TopLeft.position(vex::deg));
-    printf("RIGHT: %f\n", TopRight.position(vex::deg));
-    printf("LEFTVAL: %f\n", leftVal);
-    printf("RIGHTAL: %f\n", rightVal);
-
-    leftVal = (ROBOTLENGTH * returnAngle) / RADIUS;
-    RunMotor( leftVal, TopLeft );
-    RunMotor( leftVal, BottomLeft );
-
-
-    rightVal = (ROBOTLENGTH * returnAngle * -1) / RADIUS;
-    RunMotor( rightVal, TopRight );
-    RunMotor( rightVal, BottomRight );
-
-    return false;
-}
-
 bool MoveToOrigin()
 {
     while(abs(TopLeft.position(vex::deg)) <= returnVal && abs(TopRight.position(vex::deg)) <= returnVal)
@@ -176,7 +179,7 @@ int main() {
    
     while(1) {
         RunChassis();
-        CalculateMovement();
+        ReturnAngleCalculatedNew();
 
         if(Controller.ButtonA.pressing())
         {
