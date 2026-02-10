@@ -27,20 +27,12 @@ vex::motor       BottomRight( vex::PORT10, true );
 
 vex::controller Controller;
 
-/*
-AL = (pi)r * (theta/180)
-
-dL - dR = (R + L)chTheta - (R - L)chTheta;
-*/
-
 float vertical = 0;
 float horizontal = 0;
 float theta = 0;
 float returnTheta = 0;
 
 float returnVal;
-//float returnAngle;
-
 
 float leftVal;
 float rightVal;
@@ -118,33 +110,38 @@ void EstablishReturnVal()
 
 bool ReturnedAngleUpdated()
 {
-    float dL = TopLeft.current(vex::percent);
-    float dR = TopRight.current(vex::percent);
+    float dL = TopLeft.position(vex::deg);
+    float dR = TopRight.position(vex::deg);
     float thetaChange = ((dL - dR) * 2 * RADIUS * 3.14159265358979323846) / 360;
     thetaChange /= (2 * ROBOTLENGTH * 3.14159265358979323846);
     thetaChange *= 360;
     returnTheta += thetaChange;
 
-    printf("lala\n");
-
     if(abs(returnTheta) >= abs(returnVal)) return true;
 
-    float absTheta = abs(theta);
+    printf("returnVal: %f\n", returnVal);
+
+    float absTheta = abs(returnVal);
 
     if(absTheta > 180)
     {
-        RunMotor( -absTheta, TopLeft );
-        RunMotor( -absTheta, BottomLeft );
-        RunMotor( absTheta, TopRight );
-        RunMotor( absTheta, BottomRight );
+        RunMotor( -20, TopLeft );
+        RunMotor( -20, BottomLeft );
+        RunMotor( 20, TopRight );
+        RunMotor( 20, BottomRight );
     }
     else
     {
-        RunMotor( absTheta, TopLeft );
-        RunMotor( absTheta, BottomLeft );
-        RunMotor( -absTheta, TopRight );
-        RunMotor( -absTheta, BottomRight );
+        RunMotor( 20, TopLeft );
+        RunMotor( 20, BottomLeft );
+        RunMotor( -20, TopRight );
+        RunMotor( -20, BottomRight );
     }
+
+    TopLeft.resetPosition();
+    TopRight.resetPosition();
+    BottomLeft.resetPosition();
+    BottomRight.resetPosition();
 
     return false;
 }
@@ -189,6 +186,8 @@ int main() {
     TopRight.resetPosition();
     BottomLeft.resetPosition();
     BottomRight.resetPosition();
+
+    EstablishReturnVal();
 
     while(!ReturnedAngleUpdated()) this_thread::sleep_for(10);
 
