@@ -33,6 +33,7 @@ float theta = 0;
 float returnTheta = 0;
 
 float returnVal;
+float straightReturn;
 
 float leftVal;
 float rightVal;
@@ -98,18 +99,22 @@ void RunChassis()
 
 void EstablishReturnVal()
 {
-    if(theta < 180)
-    {
-        returnVal = 180 - theta;
-    }
-    else
-    {
-        returnVal = -1 * theta;
-    }
+    returnVal = atan2(vertical, horizontal);
+    returnVal *= (180 / 3.14159265358979323846);
+
+    // if(theta < 180)
+    // {
+    //     returnVal = -1 * returnVal;
+    // }
+    // else
+    // {
+    //     returnVal = 360 - returnVal;
+    // }
 }
 
 bool ReturnedAngleUpdated()
 {
+    printf("returnVal: %f\n", returnVal);
     float dL = TopLeft.position(vex::deg);
     float dR = TopRight.position(vex::deg);
     float thetaChange = ((dL - dR) * 2 * RADIUS * 3.14159265358979323846) / 360;
@@ -119,11 +124,7 @@ bool ReturnedAngleUpdated()
 
     if(abs(returnTheta) >= abs(returnVal)) return true;
 
-    printf("returnVal: %f\n", returnVal);
-
-    float absTheta = abs(returnVal);
-
-    if(absTheta > 180)
+    if(returnTheta < 0)
     {
         RunMotor( -20, TopLeft );
         RunMotor( -20, BottomLeft );
@@ -146,15 +147,19 @@ bool ReturnedAngleUpdated()
     return false;
 }
 
+void CalculateStraightReturn()
+{
+    straightReturn = sqrt((horizontal * horizontal) + (vertical * vertical));
+}
+
 bool MoveToOrigin()
 {
-    while(abs(TopLeft.position(vex::deg)) <= returnVal && abs(TopRight.position(vex::deg)) <= returnVal)
-    {
-        RunMotor( 20, TopLeft );
-        RunMotor( 20, BottomLeft );
-        RunMotor( 20, TopRight );
-        RunMotor( 20, BottomRight );
-    }
+    if(abs(TopLeft.position(vex::deg)) >= straightReturn && abs(TopRight.position(vex::deg)) >= straightReturn) return true;
+    
+    RunMotor( 20, TopLeft );
+    RunMotor( 20, BottomLeft );
+    RunMotor( 20, TopRight );
+    RunMotor( 20, BottomRight );
     return false;
 }
 
@@ -170,10 +175,8 @@ int main() {
         RunChassis();
         ReturnAngleCalculatedNew();
 
-            printf("nothing works \n");
         if(Controller.ButtonA.pressing())
         {
-            printf("ew\n");
             break;
         }
         // Allow other tasks to run
@@ -198,14 +201,14 @@ int main() {
     BottomLeft.resetPosition();
     BottomRight.resetPosition();
 
-    // while(true)
-    // {
-    //     if(MoveToOrigin())
-    //     {
-    //         break;
-    //     }
-    //     this_thread::sleep_for(10);
-    // }
+    CalculateStraightReturn();
+
+    while(true)
+    {
+        if(MoveToOrigin()) break;
+
+        this_thread::sleep_for(10);
+    }
 
 
     RunMotor(0, TopLeft);
