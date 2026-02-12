@@ -65,13 +65,18 @@ void ReturnAngleCalculatedNew()
 {
     float dL = TopLeft.position(vex::deg);
     float dR = TopRight.position(vex::deg);
+    float average = (dL + dR) / 2;
     float thetaChange = ((dL - dR) * 2 * RADIUS * 3.14159265358979323846) / 360;
     thetaChange /= (2 * ROBOTLENGTH * 3.14159265358979323846);
     thetaChange *= 360;
 
     theta += thetaChange;
-    vertical += ROBOTLENGTH * sin(thetaChange);
-    horizontal += ROBOTLENGTH * (1 - cos(thetaChange));
+
+    vertical += average * cos(thetaChange);
+    horizontal += average * sin(thetaChange);
+
+    // vertical += ROBOTLENGTH * sin(thetaChange);
+    // horizontal += ROBOTLENGTH * (1 - cos(thetaChange));
 
     if(ROBOTLENGTH * sin(thetaChange) != 0 || ROBOTLENGTH * (1 - cos(thetaChange)) != 0)
     {
@@ -100,7 +105,10 @@ void RunChassis()
 void EstablishReturnVal()
 {
     returnVal = atan2(vertical, horizontal);
+    printf("returnVal: %f\n", returnVal);
     returnVal *= (180 / 3.14159265358979323846);
+    returnVal += 90 - abs(theta);
+    printf("returnVal: %f\n", returnVal);
 
     // if(theta < 180)
     // {
@@ -114,7 +122,6 @@ void EstablishReturnVal()
 
 bool ReturnedAngleUpdated()
 {
-    printf("returnVal: %f\n", returnVal);
     float dL = TopLeft.position(vex::deg);
     float dR = TopRight.position(vex::deg);
     float thetaChange = ((dL - dR) * 2 * RADIUS * 3.14159265358979323846) / 360;
