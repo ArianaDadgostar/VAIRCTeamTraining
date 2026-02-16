@@ -131,19 +131,19 @@ bool ReturnedAngleUpdated()
 
     if(abs(returnTheta) >= abs(returnVal)) return true;
 
-    if(returnTheta < 0)
-    {
-        RunMotor( -20, TopLeft );
-        RunMotor( -20, BottomLeft );
-        RunMotor( 20, TopRight );
-        RunMotor( 20, BottomRight );
-    }
-    else
+    if(returnVal < 0)
     {
         RunMotor( 20, TopLeft );
         RunMotor( 20, BottomLeft );
         RunMotor( -20, TopRight );
         RunMotor( -20, BottomRight );
+    }
+    else
+    {
+        RunMotor( -20, TopLeft );
+        RunMotor( -20, BottomLeft );
+        RunMotor( 20, TopRight );
+        RunMotor( 20, BottomRight );
     }
 
     TopLeft.resetPosition();
