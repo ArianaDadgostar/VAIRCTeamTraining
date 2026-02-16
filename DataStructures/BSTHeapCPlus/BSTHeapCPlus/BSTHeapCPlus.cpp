@@ -25,6 +25,51 @@ struct BSTHeap
 {
     Node<T>*Head;
 
+    struct Iterator
+    {
+        Node<T>* current;
+        std::queue<Node<T>*> Traversal;
+
+        Iterator& operator++()
+        {
+            if (!Traversal.empty())
+            {
+                current = Traversal.front();  // get the next node
+                Traversal.pop();        // remove it from the deque
+            }
+            else
+            {
+                current = nullptr;            // no more elements
+            }
+            return *this;
+        }
+
+
+        T& operator*()
+        {
+            return current->value;
+        }
+
+        bool operator!=(Iterator other)
+        {
+            return current != other.current;
+        }
+    };
+
+    Iterator begin()
+    {
+        Iterator iterator;
+        iterator.Traversal = InOrderTraversal(iterator.Traversal, Head);
+        iterator.current = iterator.Traversal.front();
+        iterator.Traversal.pop();
+        return iterator;
+    }
+
+    Iterator end()
+    {
+        return Iterator{nullptr};
+    }
+
     Node<T>* RotateLeft(Node<T>* node)
     {
         Node<T>* newRight = node->right->left;
@@ -92,8 +137,20 @@ struct BSTHeap
         if (current == nullptr) return;
 
         InOrderTraversal(current->left);
-        std::cout << current->value << " "; // this line somehow makes the value 1
+        std::cout << current->value << " ";
         InOrderTraversal(current->right);
+    }
+
+
+    std::queue<Node<T>*> InOrderTraversal(std::queue<Node<T>*> InOrder, Node<T>* current)
+    {
+        if (current == nullptr) return InOrder;
+
+        InOrder = InOrderTraversal(InOrder, current->left);
+        InOrder.push(current);
+        InOrder = InOrderTraversal(InOrder, current->right);
+
+        return InOrder;
     }
 
 
@@ -252,6 +309,11 @@ int main()
         // std::cout << std::endl;
     }
 
+    for(auto value : tree)
+    {
+        std::cout << value << std::endl;
+    }
+
         std::cout << std::endl;
         std::cout << std::endl;
 
@@ -263,6 +325,8 @@ int main()
         tree.Head = tree.Remove(values[i], tree.Head);
     ;
     }
+
+
 }
 
 /*
