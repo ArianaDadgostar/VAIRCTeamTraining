@@ -107,7 +107,7 @@ void EstablishReturnVal()
     returnVal = atan2(vertical, horizontal);
     printf("returnVal: %f\n", returnVal);
     returnVal *= (180 / 3.14159265358979323846);
-    returnVal += 90 - abs(theta);
+    returnVal += (90 * (horizontal/abs(horizontal)) * (vertical/abs(vertical))) - abs(theta);
     printf("returnVal: %f\n", returnVal);
 
     // if(theta < 180)
