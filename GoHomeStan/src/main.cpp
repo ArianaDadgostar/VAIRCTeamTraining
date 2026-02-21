@@ -71,9 +71,9 @@ void ReturnAngleCalculatedNew()
     thetaChange *= 360;
 
     theta += thetaChange;
-
-    vertical += average * cos(thetaChange);
-    horizontal += average * sin(thetaChange);
+    double rad = theta * M_PI / 180.0;
+    vertical += average * cos(rad);
+    horizontal += average * sin(rad); // used to be thetaChange
 
     // vertical += ROBOTLENGTH * sin(thetaChange);
     // horizontal += ROBOTLENGTH * (1 - cos(thetaChange));
@@ -104,20 +104,33 @@ void RunChassis()
 
 void EstablishReturnVal()
 {
-    returnVal = atan2(vertical, horizontal);
-    printf("returnVal: %f\n", returnVal);
+    if(abs(vertical) < 1)
+    {
+        vertical = 1;
+    }
+    returnVal = atan2(-horizontal, -vertical);
     returnVal *= (180 / 3.14159265358979323846);
-    returnVal += (90 * (horizontal/abs(horizontal)) * (vertical/abs(vertical))) - abs(theta);
-    printf("returnVal: %f\n", returnVal);
+    printf("ogreturnVal: %f\n", returnVal);
 
-    // if(theta < 180)
-    // {
-    //     returnVal = -1 * returnVal;
-    // }
-    // else
-    // {
-    //     returnVal = 360 - returnVal;
-    // }
+    ////returnVal *= (horizontal/abs(horizontal)) * (vertical/abs(vertical));
+    //returnVal = (270 * (returnVal/abs(returnVal))) - (returnVal + theta);
+    
+    returnVal = returnVal - theta;
+    //returnVal = (180 - (returnVal + theta));
+
+    // returnVal += (90 * (horizontal/abs(horizontal)) * (vertical/abs(vertical))) - theta;
+    printf("returnVal: %f\n", returnVal); 
+
+    if(abs(returnVal) < 180)
+    {
+        returnVal = -1 * returnVal;
+    }
+    else
+    {
+        returnVal = (360 - abs(returnVal)) * (returnVal/abs(returnVal));
+    }
+
+    printf("final returnVal: %f\n", returnVal);
 }
 
 bool ReturnedAngleUpdated()
@@ -128,6 +141,8 @@ bool ReturnedAngleUpdated()
     thetaChange /= (2 * ROBOTLENGTH * 3.14159265358979323846);
     thetaChange *= 360;
     returnTheta += thetaChange;
+
+    //printf("current: %f\n", returnTheta); 
 
     if(abs(returnTheta) >= abs(returnVal)) return true;
 
@@ -198,6 +213,8 @@ int main() {
     BottomRight.resetPosition();
 
     EstablishReturnVal();
+
+    theta = 0;
 
     while(!ReturnedAngleUpdated()) this_thread::sleep_for(10);
 

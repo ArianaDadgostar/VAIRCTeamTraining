@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <queue>
+#include <stack>
 
 template<typename T>
 struct Node
@@ -30,18 +31,52 @@ struct BSTHeap
         Node<T>* current;
         std::queue<Node<T>*> Traversal;
 
+        // Iterator& operator++()
+        // {
+        //     if (!Traversal.empty())
+        //     {
+        //         current = Traversal.front();  // get the next node
+        //         Traversal.pop();        // remove it from the deque
+        //     }
+        //     else
+        //     {
+        //         current = nullptr;            // no more elements
+        //     }
+        //     return *this;
+        // }
+
         Iterator& operator++()
         {
-            if (!Traversal.empty())
+            std::stack<Node<T>*> parent = std::stack<Node<T>*>();
+            
+            while(parent.top() != nullptr)
             {
-                current = Traversal.front();  // get the next node
-                Traversal.pop();        // remove it from the deque
+                if(current.left != nullptr && )
             }
-            else
+        }
+
+        Iterator& operator++()
+        {
+            std::stack<Node<T>*> parent = std::stack<Node<T>*>();
+            parent.push(tree->Head);
+            
+
+            while(parent.top()->left != nullptr)
             {
-                current = nullptr;            // no more elements
+                parent.push(parent.top()->left);
             }
-            return *this;
+
+            while(parent.top() != nullptr)
+            {
+                current = parent.top();
+                parent.pop();
+                co_yield *this;
+
+                if(parent.top()->right != nullptr)
+                {
+                    parent.push(parent.top()->right);
+                }
+            }
         }
 
 
