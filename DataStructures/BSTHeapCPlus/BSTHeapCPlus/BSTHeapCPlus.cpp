@@ -4,6 +4,7 @@
 #include <iostream>
 #include <queue>
 #include <stack>
+#include <list>
 
 template<typename T>
 struct Node
@@ -29,7 +30,9 @@ struct BSTHeap
     struct Iterator
     {
         Node<T>* current;
-        std::queue<Node<T>*> Traversal;
+
+        std::stack<Node<T>*> parent = std::stack<Node<T>*>();
+        std::list<Node<T>*> previous = std::list<Node<T>*>();
 
         // Iterator& operator++()
         // {
@@ -47,36 +50,36 @@ struct BSTHeap
 
         Iterator& operator++()
         {
-            std::stack<Node<T>*> parent = std::stack<Node<T>*>();
-            
-            while(parent.top() != nullptr)
-            {
-                if(current.left != nullptr && )
-            }
-        }
-
-        Iterator& operator++()
-        {
-            std::stack<Node<T>*> parent = std::stack<Node<T>*>();
-            parent.push(tree->Head);
-            
-
-            while(parent.top()->left != nullptr)
-            {
-                parent.push(parent.top()->left);
-            }
-
-            while(parent.top() != nullptr)
-            {
-                current = parent.top();
-                parent.pop();
-                co_yield *this;
-
-                if(parent.top()->right != nullptr)
+            while(!parent.empty())
+            { 
+                if(parent.top() != nullptr && parent.top()->left != nullptr && 
+                    std::find(previous.begin(), previous.end(), parent.top()->left) == previous.end()) 
+                { 
+                    parent.push(parent.top()->left); 
+                    current = parent.top(); 
+                    continue; 
+                } 
+                    
+                if(parent.top()->right != nullptr) 
+                { 
+                    previous.push_front(parent.top()); 
+                    current = parent.top();
+                    parent.pop();
+                    parent.push(current->right);
+                    return *this; 
+                } 
+                else 
                 {
-                    parent.push(parent.top()->right);
+                    if(parent.size() == 0) return *this;
+
+                    previous.push_front(parent.top());
+                    current = parent.top();
+                    parent.pop();
+                    return *this; 
                 }
             }
+            current = nullptr;
+            return *this;
         }
 
 
@@ -94,9 +97,9 @@ struct BSTHeap
     Iterator begin()
     {
         Iterator iterator;
-        iterator.Traversal = InOrderTraversal(iterator.Traversal, Head);
-        iterator.current = iterator.Traversal.front();
-        iterator.Traversal.pop();
+        iterator.current = Head;
+        iterator.parent.push(Head);
+        iterator.operator++();
         return iterator;
     }
 
