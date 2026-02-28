@@ -16,13 +16,15 @@ struct Analysis
         std::unordered_map<std::string, std::vector<std::string>> storage;
         int maxWordCount;
         int currentWordCount;
-        std::string last;
+        std::string firstKey;
+        std::string secondKey;
         std::string generated;
 
     Analysis()
     {
         storage = std::unordered_map<std::string, std::vector<std::string>>();
-        last = "";
+        firstKey = "";
+        secondKey = "";
         generated = "";
         currentWordCount = 0;
     }
@@ -69,18 +71,21 @@ struct Analysis
 
     bool CanGenerate()
     {
-        if(last == "") return false;
+        if(secondKey == "" || firstKey == "") return false;
 
         generated += " ";
     
         int random_number = std::rand() % 100 + 1;
 
-        auto& vec = storage.at(last);
+        if(storage.find(firstKey + secondKey) == storage.end()) return false;
+
+        auto& vec = storage.at(firstKey + secondKey);
         std::string current = vec[random_number % vec.size()];
 
         generated += current;
 
-        last = current; 
+        firstKey = secondKey;
+        secondKey = current; 
         currentWordCount++;
 
         return true;
@@ -110,13 +115,13 @@ int main() {
     Analysis analysis = Analysis();
     analysis.maxWordCount = 40;
 
-
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
     analysis.Establish(fileContent);
 
-    analysis.last = "Harry is";
-    analysis.generated += analysis.last;
+    analysis.firstKey = "Harry";
+    analysis.secondKey = "Potter";
+    analysis.generated += analysis.firstKey + ' ' + analysis.secondKey;
 
     while(analysis.CanGenerate() && analysis.currentWordCount <= analysis.maxWordCount){}
 
