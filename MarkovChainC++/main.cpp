@@ -29,7 +29,8 @@ struct Analysis
 
     void Establish(std::string File)
     {
-        std::string previous = "";
+        std::string first = "";
+        std::string second = "";
         std::string current = "";
 
         for(char var : File)
@@ -40,25 +41,29 @@ struct Analysis
                 continue;
             }
 
-            if(previous == "")
+            if(first.empty())
             {
-                previous = current;
+                first = current;
                 current = "";
-
-                storage.emplace(previous, std::vector<std::string>());
-
+                continue;
+            }
+            else if(second.empty())
+            {
+                second = current;
+                current = "";
                 continue;
             }
 
-            storage[previous].push_back(current);
+            storage[first + second].push_back(current);
 
-            previous = current;
+            first = second;
+            second = current;
             current = "";
 
-            if(storage.find(previous) != storage.end()) continue;
+            if(storage.find(first + second) != storage.end()) continue;
 
 
-            storage.emplace(previous, std::vector<std::string>());
+            storage.emplace(first + second, std::vector<std::string>());
         }
     }
 
@@ -91,14 +96,16 @@ int main() {
         return 1;
     }
 
-    std::ifstream ifs(fileContent);
+    std::string line;
+    std::cout << "File Contents:" << std::endl;
 
-    std::stringstream ss;
-    ss << ifs.rdbuf(); 
-    
-    std::string content = ss.str();
-    
-    ifs.close();
+    // 3. Read the file line by line using std::getline
+    while (std::getline(file, line)) {
+        fileContent += line + " ";
+    }
+
+    // 4. Close the file (optional but good practice)
+    file.close();
 
     Analysis analysis = Analysis();
     analysis.maxWordCount = 40;
@@ -108,12 +115,10 @@ int main() {
 
     analysis.Establish(fileContent);
 
-    analysis.last = "Trees";
+    analysis.last = "Harry is";
     analysis.generated += analysis.last;
 
     while(analysis.CanGenerate() && analysis.currentWordCount <= analysis.maxWordCount){}
 
     std::cout << analysis.generated << std::endl;
-
-    return 0;
 }
