@@ -12,39 +12,12 @@ public class Analysis
     public string last;
     public string generated;
 
-    public Analysis(string File)
+    public Analysis()
     {
-        string previous = "";
-        string current = "";
-
-        foreach(char var in File)
-        {
-            if(var != ' ')
-            {
-                current += var;
-                continue;
-            }
-
-            if(previous == "")
-            {
-                previous = current;
-                current = "";
-
-                storage.Add(previous, new List<string>());
-
-                continue;
-            }
-
-            storage[previous].Add(current);
-
-            previous = current;
-            current = "";
-
-            if(storage.ContainsKey(previous)) continue;
-
-
-            storage.Add(previous, new List<string>());
-        }
+        storage = new Dictionary<string, List<string>>();
+        last = "";
+        generated = "";
+        currentWordCount = 0;
     }
 
     public void Establish(string File)
