@@ -1,4 +1,9 @@
 #include "main.h"
+#include <cstring>
+
+#define IS_TRANSMITTER 1
+#define TRANSMITTER_PORT 4
+#define RECEIVER_PORT 1
 
 /**
  * A callback function for LLEMU's center button.
@@ -74,7 +79,39 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
+	pros::Link transmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+	pros::Link reciever(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+	while(true)
+	{
+		if(IS_TRANSMITTER)
+		{
+			char* data = "Hello!";
+
+			transmitter.transmit(data, strlen(data) + 1);
+			pros::lcd::print(2, "Transmitted: Hello!");
+		}
+		else
+		{
+			char* expected = "Hello!";
+			char result[32];
+			reciever.receive(result, sizeof(result));		
+
+			reciever.receive((void*)result, strlen(expected) + 1);
+
+			if(strcmp(result, expected) == 0)
+			{
+				pros::lcd::print(2, "Recieved: Hello!");
+			}
+			else
+			{
+				pros::lcd::print(2, "Instead recieved: %s", result);
+			}
+		}
+		pros::delay(20);                               // Run for 20 ms then update
+	}
+
 	pros::MotorGroup left_mg({1, -2, 3});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
 	pros::MotorGroup right_mg({-4, 5, -6});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
 
