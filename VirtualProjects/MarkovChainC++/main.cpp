@@ -119,8 +119,8 @@ int main() {
 
     analysis.Establish(fileContent);
 
-    analysis.firstKey = "Harry";
-    analysis.secondKey = "Potter";
+    analysis.firstKey = "Hermione";
+    analysis.secondKey = "was";
     analysis.generated += analysis.firstKey + ' ' + analysis.secondKey;
 
     while(analysis.CanGenerate() && analysis.currentWordCount <= analysis.maxWordCount){}

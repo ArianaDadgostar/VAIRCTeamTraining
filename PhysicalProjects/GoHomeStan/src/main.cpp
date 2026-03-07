@@ -23,6 +23,7 @@ vex::motor       TopLeft( vex::PORT19, false );
 vex::motor       TopRight( vex::PORT9, true );
 vex::motor       BottomLeft( vex::PORT20, false );
 vex::motor       BottomRight( vex::PORT10, true );
+vex::inertial           Inertial( vex::PORT6 );
 
 
 vex::controller Controller;
@@ -61,6 +62,14 @@ void RunMotor(int velocity, vex::motor motor)
     motor.spin(vex::directionType::fwd, velocity, vex::velocityUnits::pct);
 }
 
+void InertialTesting()
+{
+    printf("angle: %f\n", Inertial.angle(vex::rotationUnits::deg));
+    printf("heading: %f\n", Inertial.heading(vex::rotationUnits::deg));
+    printf("rotation: %f\n", Inertial.rotation(vex::rotationUnits::deg));
+    this_thread::sleep_for(100);
+}
+
 void ReturnAngleCalculatedNew()
 {
     float dL = TopLeft.position(vex::deg);
@@ -73,10 +82,7 @@ void ReturnAngleCalculatedNew()
     theta += thetaChange;
     double rad = theta * M_PI / 180.0;
     vertical += average * cos(rad);
-    horizontal += average * sin(rad); // used to be thetaChange
-
-    // vertical += ROBOTLENGTH * sin(thetaChange);
-    // horizontal += ROBOTLENGTH * (1 - cos(thetaChange));
+    horizontal += average * sin(rad);
 
     if(ROBOTLENGTH * sin(thetaChange) != 0 || ROBOTLENGTH * (1 - cos(thetaChange)) != 0)
     {
@@ -93,8 +99,8 @@ void ReturnAngleCalculatedNew()
 
 void RunChassis()
 {
-    int LeftVal = powerMap[Controller.Axis3.position()]; //+ powerMap[Controller.Axis1.position()];
-    int RightVal = powerMap[Controller.Axis2.position()]; //- powerMap[Controller.Axis1.position()];
+    int LeftVal = powerMap[Controller.Axis3.position()];
+    int RightVal = powerMap[Controller.Axis2.position()];
     
     RunMotor(Controller.Axis3.position()/5, TopLeft);
     RunMotor(Controller.Axis2.position()/5, TopRight);
@@ -110,16 +116,8 @@ void EstablishReturnVal()
     }
     returnVal = atan2(-horizontal, -vertical);
     returnVal *= (180 / 3.14159265358979323846);
-    printf("ogreturnVal: %f\n", returnVal);
-
-    ////returnVal *= (horizontal/abs(horizontal)) * (vertical/abs(vertical));
-    //returnVal = (270 * (returnVal/abs(returnVal))) - (returnVal + theta);
     
     returnVal = returnVal - theta;
-    //returnVal = (180 - (returnVal + theta));
-
-    // returnVal += (90 * (horizontal/abs(horizontal)) * (vertical/abs(vertical))) - theta;
-    printf("returnVal: %f\n", returnVal); 
 
     if(abs(returnVal) < 180)
     {
@@ -129,8 +127,6 @@ void EstablishReturnVal()
     {
         returnVal = (360 - abs(returnVal)) * (returnVal/abs(returnVal));
     }
-
-    printf("final returnVal: %f\n", returnVal);
 }
 
 bool ReturnedAngleUpdated()
@@ -141,8 +137,6 @@ bool ReturnedAngleUpdated()
     thetaChange /= (2 * ROBOTLENGTH * 3.14159265358979323846);
     thetaChange *= 360;
     returnTheta += thetaChange;
-
-    //printf("current: %f\n", returnTheta); 
 
     if(abs(returnTheta) >= abs(returnVal)) return true;
 
@@ -186,26 +180,36 @@ bool MoveToOrigin()
 }
 
 int main() {
-
-    TopLeft.resetPosition();
-    TopRight.resetPosition();
-    BottomLeft.resetPosition();
-    BottomRight.resetPosition();
-    printf( "Hello V5" );
-   
-    while(1) {
+    Inertial.resetRotation();
+    printf("Hello V5\n");
+    while(true)
+    {
         RunChassis();
-        ReturnAngleCalculatedNew();
-
         if(Controller.ButtonA.pressing())
         {
             break;
         }
-        // Allow other tasks to run
         this_thread::sleep_for(10);
     }
 
-    //CalculateReturn();
+    theta = Inertial.rotation();
+
+    // TopLeft.resetPosition();
+    // TopRight.resetPosition();
+    // BottomLeft.resetPosition();
+    // BottomRight.resetPosition();
+   
+    // while(1) {
+    //     RunChassis();
+    //     ReturnAngleCalculatedNew();
+
+    //     if(Controller.ButtonA.pressing())
+    //     {
+    //         break;
+    //     }
+    //     // Allow other tasks to run
+    //     this_thread::sleep_for(10);
+    // }
 
     TopLeft.resetPosition();
     TopRight.resetPosition();
@@ -218,8 +222,6 @@ int main() {
 
     while(!ReturnedAngleUpdated()) this_thread::sleep_for(10);
 
-    printf("brother what\n");
-
     TopLeft.resetPosition();
     TopRight.resetPosition();
     BottomLeft.resetPosition();
@@ -229,6 +231,7 @@ int main() {
 
     while(true)
     {
+        printf("alr bru \n");
         if(MoveToOrigin()) break;
 
         this_thread::sleep_for(10);

@@ -1,6 +1,6 @@
 ---
 triple:          'arm64-apple-darwin'
-binary-path:     '/Users/arianadadgostar/Documents/Github Repositories/VAIRCTeamTraining/MarkovChainC++/main'
+binary-path:     '/Users/arianadadgostar/Documents/Github Repositories/VAIRCTeamTraining/VirtualProjects/MarkovChainC++/main'
 relocations:
   - { offsetInCU: 0x5C, offset: 0x5C, size: 0x8, addend: 0x0, symName: __ZNSt3__119piecewise_constructE, symObjAddr: 0xA874, symBinAddr: 0x10000B934, symSize: 0x0 }
   - { offsetInCU: 0xEA52, offset: 0xEA52, size: 0x8, addend: 0x0, symName: __ZNSt3__16copy_nB8ue170006IPKcmPcEENS_9enable_ifIXsr37__has_random_access_iterator_categoryIT_EE5valueET1_E4typeES5_T0_S6_, symObjAddr: 0x67CC, symBinAddr: 0x1000074D8, symSize: 0x44 }
