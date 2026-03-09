@@ -79,53 +79,76 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
-	pros::Link transmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-	pros::Link reciever(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+	pros::Link masterTransmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+	pros::Link masterReceiver(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+	pros::Link slaveReceiver(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+	pros::Link slaveTransmitter(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+
+	pros::MotorGroup left_transmitter({10, 9});
+	pros::MotorGroup right_transmitter({-20, -19});
+
+	pros::MotorGroup left_receiver({16, 20});
+	pros::MotorGroup right_receiver({-15, -11});
+
+	left_transmitter.tare_position();
+	right_transmitter.tare_position();
+
+	left_receiver.tare_position();
+	right_receiver.tare_position();
+
+	if(IS_TRANSMITTER)
+	{	
+		char* expected = "Check";
+		char result[32];
+		masterReceiver.receive(result, sizeof(result));		
+
+		while(strcmp(result, expected) != 0)
+		{
+			pros::lcd::print(2, "Not Received: Check");
+			masterReceiver.receive((void*)result, strlen(expected) + 1);
+		}
+
+		left_transmitter.move(20);
+		right_transmitter.move(20);
+
+		while(abs(left_transmitter.get_position(0)) < 500){}
+	}
+
+
 	while(true)
 	{
 		if(IS_TRANSMITTER)
 		{
-			char* data = "Hello!";
+			char* data = "Move";
 
-			transmitter.transmit(data, strlen(data) + 1);
-			pros::lcd::print(2, "Transmitted: Hello!");
+			masterTransmitter.transmit(data, strlen(data) + 1);
+			pros::lcd::print(2, "Transmitted: Move");
+			left_transmitter.move(0);
+			right_transmitter.move(0);
 		}
 		else
 		{
-			char* expected = "Hello!";
+			char* expected = "Move";
 			char result[32];
-			reciever.receive(result, sizeof(result));		
+			slaveReceiver.receive(result, sizeof(result));		
 
-			reciever.receive((void*)result, strlen(expected) + 1);
+			slaveReceiver.receive((void*)result, strlen(expected) + 1);
 
 			if(strcmp(result, expected) == 0)
 			{
-				pros::lcd::print(2, "Recieved: Hello!");
+				pros::lcd::print(2, "Recieved: Move");
+				left_receiver.move(20);
+				right_receiver.move(20);
 			}
 			else
 			{
 				pros::lcd::print(2, "Instead recieved: %s", result);
+
+				char* data = "Check";
+				slaveTransmitter.transmit(data, strlen(result) + 1);
 			}
 		}
-		pros::delay(20);                               // Run for 20 ms then update
-	}
-
-	pros::MotorGroup left_mg({1, -2, 3});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
-	pros::MotorGroup right_mg({-4, 5, -6});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
-
-
-	while (true) {
-		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);  // Prints status of the emulated screen LCDs
-
-		// Arcade control scheme
-		int dir = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
-		int turn = master.get_analog(ANALOG_RIGHT_X);  // Gets the turn left/right from right joystick
-		left_mg.move(dir - turn);                      // Sets left motor voltage
-		right_mg.move(dir + turn);                     // Sets right motor voltage
-		pros::delay(20);                               // Run for 20 ms then update
+		pros::delay(10);
 	}
 }
