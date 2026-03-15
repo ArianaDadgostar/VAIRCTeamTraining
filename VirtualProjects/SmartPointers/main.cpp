@@ -41,23 +41,21 @@ struct Node
 template<typename T>
 struct LinkedList
 {
-    int length = 5;
-    std::array<Node<T>, 5> nodes;
-    std::array<bool, 5> used;
+    int length = 8;
+    std::array<Node<T>, 8> nodes;
+    std::byte used;
 
     LinkedList(T headVal)
     {
         nodes[0].value = headVal;
+        std::byte current = std::byte{1};
         for(int i = 1; i < length; i ++)
         {
             nodes[i - 1].next = &nodes[i];
+            current << 1;
         }
-
-        used[0] = true;
-        for(int i = 1; i < length; i++)
-        {
-            used[i] = false;
-        }
+        
+        used xor current;
     }
 
     void add(T val)
