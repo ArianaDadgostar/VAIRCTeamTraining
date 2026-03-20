@@ -38,13 +38,47 @@ struct Node
     Node<T>* next = nullptr;
 };
 
-template<typename T>
 struct LinkedList
 {
-    std::byte[] nodes;
+    std::byte* nodes;
+    static const int TOTAL_SIZE = 100;
+    static const int BLOCK_SIZE = 4;
+    static const int TRACKING_SIZE = TOTAL_SIZE/(BLOCK_SIZE + 1);
+
+    template<typename T>
+    T* allocate(T item)
+    {
+        int index = -1;
+        for(int i = 0; i < TRACKING_SIZE - sizeof(item); i ++)
+        {
+            int size = sizeof(item);
+            size /= 4;
+            if(sizeof(item) % 4 > 0)
+            {
+                size++;
+            }
+            for(int j = 0; j < sizeof(item); j ++)
+            {
+                if(nodes[i + j] == (std::byte)0) break;
+                
+                if(j == sizeof(item) - 1)
+                {
+                    index = i;
+                }
+            }
+        }
+
+        std::memcpy(nodes[index], &item, sizeof(item));
+    }
+
+
 };
 
 
 int main() 
 {
+    LinkedList list = LinkedList();
+
+    int num = 4;
+    list.allocate(num);
 }
