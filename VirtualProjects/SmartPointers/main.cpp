@@ -44,34 +44,103 @@ struct LinkedList
     static const int TOTAL_SIZE = 100;
     static const int BLOCK_SIZE = 4;
     static const int TRACKING_SIZE = TOTAL_SIZE/(BLOCK_SIZE + 1);
+    static const int STORING_SIZE = TOTAL_SIZE - TRACKING_SIZE;
 
-    template<typename T>
-    T* allocate(T item)
+    LinkedList()
     {
-        int index = -1;
-        for(int i = 0; i < TRACKING_SIZE - sizeof(item); i ++)
+        nodes = new std::byte[TOTAL_SIZE];
+        for(int i = 0; i < TOTAL_SIZE; i ++)
         {
-            int size = sizeof(item);
-            size /= 4;
-            if(sizeof(item) % 4 > 0)
-            {
-                size++;
-            }
-            for(int j = 0; j < sizeof(item); j ++)
-            {
-                if(nodes[i + j] == (std::byte)0) break;
-                
-                if(j == sizeof(item) - 1)
-                {
-                    index = i;
-                }
-            }
+            nodes[i] = (std::byte)0;
         }
-
-        std::memcpy(nodes[index], &item, sizeof(item));
     }
 
+    template<typename T>
+    bool allocate(T item)
+    {
+        int index = -1;
+        int size = sizeof(item);
+        size /= 4;
 
+        if(sizeof(item) % 4 > 0)
+        {
+            size++;
+        }
+
+        for(int i = STORING_SIZE; i < TOTAL_SIZE - size; i ++)
+        {
+            for(int j = 0; j < size; j ++)
+            {
+                if(nodes[i + j] == (std::byte)1) break;
+                
+                if(j == size - 1)
+                {
+                    index = i - STORING_SIZE;
+                    break;
+                }
+            }
+            if(index >= 0) break;
+        }
+
+        if(index < 0) return false;
+
+        std::memcpy(&nodes[index], &item, sizeof(item));
+
+        for(int i = STORING_SIZE + index; i < STORING_SIZE + index + size; i ++)
+        {
+            nodes[i] = (std::byte)1;
+        }
+
+        return true;
+    }
+
+    template<typename T>
+    bool deAllocate(T item)
+    {
+        int index = -1;
+        int size = sizeof(item);
+        size /= 4;
+
+        if(sizeof(item) % 4 > 0)
+        {
+            size++;
+        }
+
+        for(int i = STORING_SIZE; i < TOTAL_SIZE - size; i ++)
+        {
+            for(int j = 0; j < size; j++)
+            {
+                if(nodes[i + j] == (std::byte)0) break;
+
+                if(j == size - 1)
+                {
+                    index = i - STORING_SIZE;
+                    break;
+                }
+            }
+            
+            T testVal;
+            if(std::memcpy(&testVal, &nodes[index], sizeof(T)) == nullptr) break;
+        }
+
+        if(index < 0) return false;
+
+        for(int i = STORING_SIZE + index / 4; i < STORING_SIZE + (index / 4) + size; i ++)
+        {
+            std::memset(&nodes[index], 0, sizeof(item));
+            nodes[i] = (std::byte)0;
+        }
+        return true;
+    }
+
+    void printSlots()
+    {
+        for(int i = STORING_SIZE; i < TOTAL_SIZE; i ++)
+        {
+            std::cout << (int)nodes[i] << " ";
+        }
+        std::cout << std::endl;
+    }
 };
 
 
@@ -80,5 +149,10 @@ int main()
     LinkedList list = LinkedList();
 
     int num = 4;
+    long num2 = 5;
     list.allocate(num);
+    list.allocate(num2);
+    list.printSlots();
+    list.deAllocate(num);
+    list.printSlots();
 }
