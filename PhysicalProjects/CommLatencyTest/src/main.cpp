@@ -100,22 +100,21 @@ void opcontrol() {
 
 		pros::Link transmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
 		char* message = "superimportantmessage";
-		transmitter.transmit(message, strlen(message) + 1);
+		transmitter.transmit_raw(message, strlen(message) + 1);
 		double startTime = pros::millis();
 
 		expected = "recieved";
 		char secondResult[32];
 
-		pros::Link receiver2(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+		//pros::Link receiver2(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
 		
 		expectedLength = strlen(expected) + 1;
-		receiver2.receive((void*)secondResult, expectedLength);
+		transmitter.receive_raw((void*)secondResult, expectedLength);
 		while(strcmp(secondResult, expected) != 0)
 		{
 			pros::lcd::print(2, "Instead Received: %s", secondResult);
 			pros::lcd::print(3, "Current: %f ms", pros::millis() - startTime);
-			pros::lcd::print(4, "why cant u print here");
-			receiver2.receive((void*)secondResult, expectedLength);
+			transmitter.receive_raw((void*)secondResult, expectedLength);
 			pros::delay(10);
 		}
 
@@ -132,25 +131,25 @@ void opcontrol() {
 
 		int messageLength = strlen(message) + 1;
 		int expectedLength = strlen(expected) + 1;
-		receiver.receive((void*)result, expectedLength);
+		receiver.receive_raw((void*)result, expectedLength);
 		while(strcmp(result, expected) != 0)
 		{
 			pros::lcd::print(2, "Not Received: superimportantmessage");
-			receiver.receive((void*)result, expectedLength);
+			receiver.receive_raw((void*)result, expectedLength);
 
-			transmitter.transmit(message, messageLength);
+			transmitter.transmit_raw(message, messageLength);
 
 			pros::delay(10);
 		}
 		
 
-		pros::Link transmitter2(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+		//pros::Link transmitter2(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
 
 		message = "recieved";
 		messageLength = strlen(message) + 1;
 		while(true)
 		{
-			transmitter2.transmit(message, messageLength);
+			receiver.transmit_raw(message, messageLength);
 			pros::lcd::print(2, "Transmitted: recieved");
 			pros::delay(10);
 		}
