@@ -80,76 +80,79 @@ void autonomous() {}
  */
 void opcontrol() {
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
-	pros::Link masterTransmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-	pros::Link masterReceiver(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-	pros::Link slaveReceiver(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-	pros::Link slaveTransmitter(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-
-	pros::MotorGroup left_transmitter({10, 9});
-	pros::MotorGroup right_transmitter({-20, -19});
-
-	pros::MotorGroup left_receiver({16, 20});
-	pros::MotorGroup right_receiver({-15, -11});
-
-	left_transmitter.tare_position();
-	right_transmitter.tare_position();
-
-	left_receiver.tare_position();
-	right_receiver.tare_position();
 
 	if(IS_TRANSMITTER)
-	{	
+	{
+		pros::Link receiver(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+		pros::delay(2000);
 		char* expected = "Check";
 		char result[32];
-		masterReceiver.receive(result, sizeof(result));		
 
+		int expectedLength = strlen(expected) + 1;
+		receiver.receive((void*)result, expectedLength);	
 		while(strcmp(result, expected) != 0)
 		{
-			pros::lcd::print(2, "Not Received: Check");
-			masterReceiver.receive((void*)result, strlen(expected) + 1);
+			pros::lcd::print(2, "Instead Received: %s", result);
+			receiver.receive((void*)result, expectedLength);
+			pros::delay(10);
+		}
+		pros::lcd::print(2, "Received: Check");
+
+		pros::Link transmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+		char* message = "superimportantmessage";
+		transmitter.transmit(message, strlen(message) + 1);
+		double startTime = pros::millis();
+
+		expected = "recieved";
+		char secondResult[32];
+
+		pros::Link receiver2(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+		
+		expectedLength = strlen(expected) + 1;
+		receiver2.receive((void*)secondResult, expectedLength);
+		while(strcmp(secondResult, expected) != 0)
+		{
+			pros::lcd::print(2, "Instead Received: %s", secondResult);
+			pros::lcd::print(3, "Current: %f ms", pros::millis() - startTime);
+			pros::lcd::print(4, "why cant u print here");
+			receiver2.receive((void*)secondResult, expectedLength);
+			pros::delay(10);
 		}
 
-		left_transmitter.move(20);
-		right_transmitter.move(20);
-
-		while(abs(left_transmitter.get_position(0)) < 500){}
+		pros::lcd::print(4, "Latency: %f ms", pros::millis() - startTime);
 	}
-
-
-	while(true)
+	else
 	{
-		if(IS_TRANSMITTER)
+		pros::Link transmitter(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+		pros::Link receiver(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+		pros::delay(2000);
+		char* message = "Check";
+		char* expected = "superimportantmessage";
+		char result[32];
+
+		int messageLength = strlen(message) + 1;
+		int expectedLength = strlen(expected) + 1;
+		receiver.receive((void*)result, expectedLength);
+		while(strcmp(result, expected) != 0)
 		{
-			char* data = "Move";
+			pros::lcd::print(2, "Not Received: superimportantmessage");
+			receiver.receive((void*)result, expectedLength);
 
-			masterTransmitter.transmit(data, strlen(data) + 1);
-			pros::lcd::print(2, "Transmitted: Move");
-			left_transmitter.move(0);
-			right_transmitter.move(0);
+			transmitter.transmit(message, messageLength);
+
+			pros::delay(10);
 		}
-		else
+		
+
+		pros::Link transmitter2(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+
+		message = "recieved";
+		messageLength = strlen(message) + 1;
+		while(true)
 		{
-			char* expected = "Move";
-			char result[32];
-			slaveReceiver.receive(result, sizeof(result));		
-
-			slaveReceiver.receive((void*)result, strlen(expected) + 1);
-
-			if(strcmp(result, expected) == 0)
-			{
-				pros::lcd::print(2, "Recieved: Move");
-				left_receiver.move(20);
-				right_receiver.move(20);
-			}
-			else
-			{
-				pros::lcd::print(2, "Instead recieved: %s", result);
-
-				char* data = "Check";
-				slaveTransmitter.transmit(data, strlen(result) + 1);
-			}
+			transmitter2.transmit(message, messageLength);
+			pros::lcd::print(2, "Transmitted: recieved");
+			pros::delay(10);
 		}
-		pros::delay(10);
 	}
 }
-
