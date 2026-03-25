@@ -1,9 +1,14 @@
 #include "main.h"
 #include <cstring>
+#include <string.h>
 
-#define IS_TRANSMITTER 0
+#define IS_TRANSMITTER 1
 #define TRANSMITTER_PORT 4
 #define RECEIVER_PORT 1
+
+
+#define LINK_PORT 1
+#define LINK_ID "PING_LI
 
 /**
  * A callback function for LLEMU's center button.
@@ -78,80 +83,164 @@ void autonomous() {}
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+	
 void opcontrol() {
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
 
-	if(IS_TRANSMITTER)
+#if IS_TRANSMITTER
+	pros::Link tx_link(LINK_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+	pros::Task::delay(200);
+
+	char* message = "check";
+	char* expected = "check";
+	//char result[32];
+
+	tx_link.transmit_raw((void*)message, strlen(message) + 1);
+	//tx_link.receive((void*)result, strlen(expected) + 1);
+	while(true)//strcmp(result, expected) != 0)
 	{
-		pros::Link receiver(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-		pros::delay(2000);
-		char* expected = "Check";
-		char result[32];
-
-		int expectedLength = strlen(expected) + 1;
-		receiver.receive((void*)result, expectedLength);	
-		while(strcmp(result, expected) != 0)
-		{
-			pros::lcd::print(2, "Instead Received: %s", result);
-			receiver.receive((void*)result, expectedLength);
-			pros::delay(10);
-		}
-		pros::lcd::print(2, "Received: Check");
-
-		pros::Link transmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-		char* message = "superimportantmessage";
-		transmitter.transmit_raw(message, strlen(message) + 1);
-		double startTime = pros::millis();
-
-		expected = "recieved";
-		char secondResult[32];
-
-		//pros::Link receiver2(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-		
-		expectedLength = strlen(expected) + 1;
-		transmitter.receive_raw((void*)secondResult, expectedLength);
-		while(strcmp(secondResult, expected) != 0)
-		{
-			pros::lcd::print(2, "Instead Received: %s", secondResult);
-			pros::lcd::print(3, "Current: %f ms", pros::millis() - startTime);
-			transmitter.receive_raw((void*)secondResult, expectedLength);
-			pros::delay(10);
-		}
-
-		pros::lcd::print(4, "Latency: %f ms", pros::millis() - startTime);
+		pros::lcd::print(2, "Instead Received: %d", pros::millis());
+		tx_link.transmit_raw((void*)message, strlen(message) + 1);
+		pros::delay(10);
+		// tx_link.receive((void*)result, strlen(expected) + 1);
+		// pros::delay(10);
 	}
-	else
+
+	pros::lcd::print(2, "Received: check");
+
+	// uint8_t ping_byte = 0xAB;
+	// uint8_t response = 0;
+
+	// while (true) {
+	// 	uint32_t send_time = pros::millis();
+
+	// 	tx_link.transmit(&ping_byte, 1);
+
+	// 	// switch to receive
+	// 	pros::Task::delay(50);
+
+	// 	tx_link.receive(&response, 1);
+
+	// 	uint32_t rtt = pros::millis() - send_time;
+
+	// 	pros::lcd::print(0, "RTT: %d ms", rtt);
+
+	// 	pros::Task::delay(50);
+
+	// 	pros::Task::delay(500);
+	// }
+
+#endif
+
+#if !IS_TRANSMITTER
+	pros::Link rx_link(LINK_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+	pros::Task::delay(200);
+
+	char* expected = "check";
+	char result[32];
+
+	rx_link.receive((void*)result, strlen(expected) + 1);
+	while(strcmp(result, expected) != 0)
 	{
-		pros::Link transmitter(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-		pros::Link receiver(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-		pros::delay(2000);
-		char* message = "Check";
-		char* expected = "superimportantmessage";
-		char result[32];
+		pros::lcd::print(2, "nah Instead Received: %s", result);
+		rx_link.receive((void*)result, strlen(expected) + 1);
+		pros::delay(10);
+	}
 
-		int messageLength = strlen(message) + 1;
-		int expectedLength = strlen(expected) + 1;
-		receiver.receive_raw((void*)result, expectedLength);
-		while(strcmp(result, expected) != 0)
-		{
-			pros::lcd::print(2, "Not Received: superimportantmessage");
-			receiver.receive_raw((void*)result, expectedLength);
+	// rx_link.transmit(expected, strlen(expected) + 1);
+	// pros::lcd::print(2, "Transmitted: check");
 
-			transmitter.transmit_raw(message, messageLength);
+	// uint8_t buf = 0;
 
-			pros::delay(10);
-		}
+	// while (true) {
+	// 	rx_link.receive(&buf, 1);
+
+	// 	// switch to transmit
+	// 	pros::Task::delay(50);
+
+	// 	rx_link.transmit(&buf, 1);
+
+	// 	// switch back
+	// 	pros::Task::delay(50);
+	// }
+#endif
+
+
+#pragma region ARIANA
+
+	// pros::Controller master(pros::E_CONTROLLER_MASTER);
+
+	// if(IS_TRANSMITTER)
+	// {
+	// 	pros::Link receiver(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+	// 	pros::delay(2000);
+	// 	char* expected = "Check";
+	// 	char result[32];
+
+	// 	int expectedLength = strlen(expected) + 1;
+	// 	receiver.receive((void*)result, expectedLength);	
+	// 	while(strcmp(result, expected) != 0)
+	// 	{
+	// 		pros::lcd::print(2, "Instead Received: %s", result);
+	// 		receiver.receive((void*)result, expectedLength);
+	// 		pros::delay(10);
+	// 	}
+	// 	pros::lcd::print(2, "Received: Check");
+
+	// 	pros::Link transmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+	// 	char* message = "superimportantmessage";
+	// 	transmitter.transmit_raw(message, strlen(message) + 1);
+	// 	double startTime = pros::millis();
+
+	// 	expected = "recieved";
+	// 	char secondResult[32];
+
+	// 	//pros::Link receiver2(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+		
+	// 	expectedLength = strlen(expected) + 1;
+	// 	transmitter.receive_raw((void*)secondResult, expectedLength);
+	// 	while(strcmp(secondResult, expected) != 0)
+	// 	{
+	// 		pros::lcd::print(2, "Instead Received: %s", secondResult);
+	// 		pros::lcd::print(3, "Current: %f ms", pros::millis() - startTime);
+	// 		transmitter.receive_raw((void*)secondResult, expectedLength);
+	// 		pros::delay(10);
+	// 	}
+
+	// 	pros::lcd::print(4, "Latency: %f ms", pros::millis() - startTime);
+	// }
+	// else
+	// {
+	// 	pros::Link transmitter(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+	// 	pros::Link receiver(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
+	// 	pros::delay(2000);
+	// 	char* message = "Check";
+	// 	char* expected = "superimportantmessage";
+	// 	char result[32];
+
+	// 	int messageLength = strlen(message) + 1;
+	// 	int expectedLength = strlen(expected) + 1;
+	// 	receiver.receive_raw((void*)result, expectedLength);
+	// 	while(strcmp(result, expected) != 0)
+	// 	{
+	// 		pros::lcd::print(2, "Not Received: superimportantmessage");
+	// 		receiver.receive_raw((void*)result, expectedLength);
+
+	// 		transmitter.transmit_raw(message, messageLength);
+
+	// 		pros::delay(10);
+	// 	}
 		
 
-		//pros::Link transmitter2(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
+	// 	//pros::Link transmitter2(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
 
-		message = "recieved";
-		messageLength = strlen(message) + 1;
-		while(true)
-		{
-			receiver.transmit_raw(message, messageLength);
-			pros::lcd::print(2, "Transmitted: recieved");
-			pros::delay(10);
-		}
-	}
+	// 	message = "recieved";
+	// 	messageLength = strlen(message) + 1;
+	// 	while(true)
+	// 	{
+	// 		receiver.transmit_raw(message, messageLength);
+	// 		pros::lcd::print(2, "Transmitted: recieved");
+	// 		pros::delay(10);
+	// 	}
+	// }
+#pragma endregion
 }
