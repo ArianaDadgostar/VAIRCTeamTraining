@@ -2,13 +2,13 @@
 #include <cstring>
 #include <string.h>
 
-#define IS_TRANSMITTER 1
+#define IS_TRANSMITTER 0
 #define TRANSMITTER_PORT 4
 #define RECEIVER_PORT 1
 
 
 #define LINK_PORT 1
-#define LINK_ID "PING_LI
+#define LINK_ID "PING_LI"
 
 /**
  * A callback function for LLEMU's center button.
@@ -88,21 +88,21 @@ void opcontrol() {
 
 #if IS_TRANSMITTER
 	pros::Link tx_link(LINK_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-	pros::Task::delay(200);
+	pros::Task::delay(2000);
 
 	char* message = "check";
 	char* expected = "check";
-	//char result[32];
+	char result[32];
 
-	tx_link.transmit_raw((void*)message, strlen(message) + 1);
-	//tx_link.receive((void*)result, strlen(expected) + 1);
-	while(true)//strcmp(result, expected) != 0)
+	tx_link.transmit((void*)message, strlen(message) + 1);
+	tx_link.receive((void*)result, strlen(expected) + 1);
+	while(strcmp(result, expected) != 0)
 	{
 		pros::lcd::print(2, "Instead Received: %d", pros::millis());
-		tx_link.transmit_raw((void*)message, strlen(message) + 1);
+		tx_link.transmit((void*)message, strlen(message) + 1);
 		pros::delay(10);
-		// tx_link.receive((void*)result, strlen(expected) + 1);
-		// pros::delay(10);
+		tx_link.receive((void*)result, strlen(expected) + 1);
+		pros::delay(10);
 	}
 
 	pros::lcd::print(2, "Received: check");
@@ -133,7 +133,7 @@ void opcontrol() {
 
 #if !IS_TRANSMITTER
 	pros::Link rx_link(LINK_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-	pros::Task::delay(200);
+	pros::Task::delay(2000);
 
 	char* expected = "check";
 	char result[32];
@@ -146,8 +146,8 @@ void opcontrol() {
 		pros::delay(10);
 	}
 
-	// rx_link.transmit(expected, strlen(expected) + 1);
-	// pros::lcd::print(2, "Transmitted: check");
+	rx_link.transmit(expected, strlen(expected) + 1);
+	pros::lcd::print(2, "Transmitted: check");
 
 	// uint8_t buf = 0;
 

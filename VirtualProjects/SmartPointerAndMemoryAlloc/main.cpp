@@ -2,6 +2,9 @@
 #include <string>
 #include <array>
 
+#define BYTE_TRACKING 0
+#define BIT_TRACKING 1
+
 struct Alien
 {
     double* copies;
@@ -41,9 +44,9 @@ struct Node
 struct LinkedList
 {
     std::byte* nodes;
-    static const int TOTAL_SIZE = 100;
+    static const int TOTAL_SIZE = 99;
     static const int BLOCK_SIZE = 4;
-    static const int TRACKING_SIZE = TOTAL_SIZE/(BLOCK_SIZE + 1);
+    static const int TRACKING_SIZE = 11;
     static const int STORING_SIZE = TOTAL_SIZE - TRACKING_SIZE;
 
     LinkedList()
@@ -54,6 +57,34 @@ struct LinkedList
             nodes[i] = (std::byte)0;
         }
     }
+
+#if BIT_TRACKING
+
+    template<typename T>
+    bool allocate(T item)
+    {
+        int size = sizeof(item) / 4;
+        size = (sizeof(item) % 4 > 0) ? size : size + 1;
+
+        for(int i = 0; i < TRACKING_SIZE; i ++) //std::ceil(((TRACKING_SIZE * 8) - size) / 8); i ++)
+        {
+            for(int j = 0; j < (8 - size); j ++)
+            {
+                std::byte mask = (std::byte)1;
+                mask << i;
+
+                if((nodes[STORING_SIZE + i] && mask) == mask) continue;
+
+            }
+        }
+    }
+
+#endif
+
+#if BYTE_TRACKING
+
+    static const int TRACKING_SIZE = TOTAL_SIZE/(BLOCK_SIZE + 1);
+    static const int STORING_SIZE = TOTAL_SIZE - TRACKING_SIZE;
 
     template<typename T>
     bool allocate(T item)
@@ -133,6 +164,8 @@ struct LinkedList
         return true;
     }
 
+#endif
+
     void printSlots()
     {
         for(int i = STORING_SIZE; i < TOTAL_SIZE; i ++)
@@ -151,8 +184,8 @@ int main()
     int num = 4;
     long num2 = 5;
     list.allocate(num);
-    list.allocate(num2);
-    list.printSlots();
-    list.deAllocate(num);
-    list.printSlots();
+    //list.allocate(num2);
+    //list.printSlots();
+    //list.deAllocate(num);
+    //list.printSlots();
 }
