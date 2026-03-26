@@ -2,7 +2,7 @@
 #include <cstring>
 #include <string.h>
 
-#define IS_TRANSMITTER 0
+#define IS_TRANSMITTER 1
 #define TRANSMITTER_PORT 4
 #define RECEIVER_PORT 1
 
@@ -107,27 +107,37 @@ void opcontrol() {
 
 	pros::lcd::print(2, "Received: check");
 
-	// uint8_t ping_byte = 0xAB;
-	// uint8_t response = 0;
+	uint8_t ping_byte = 4;
+	uint8_t response = 0;
+	uint32_t average_rtt = 0;
 
-	// while (true) {
-	// 	uint32_t send_time = pros::millis();
+	for(int i = 0; i < 50; i++) {
+		uint32_t send_time = pros::millis();
 
-	// 	tx_link.transmit(&ping_byte, 1);
+		tx_link.transmit((void*)&ping_byte, sizeof(ping_byte));
 
-	// 	// switch to receive
-	// 	pros::Task::delay(50);
+		while (true) {
+			int len = tx_link.receive(&response, 1);
 
-	// 	tx_link.receive(&response, 1);
+			if (len > 0 && response == ping_byte) {
+				break;
+			}
 
-	// 	uint32_t rtt = pros::millis() - send_time;
+			pros::delay(5);
+		}
 
-	// 	pros::lcd::print(0, "RTT: %d ms", rtt);
+		uint32_t rtt = pros::millis() - send_time;
 
-	// 	pros::Task::delay(50);
+		average_rtt += rtt;
+		pros::lcd::print(0, "RTT: %d ms", average_rtt);
 
-	// 	pros::Task::delay(500);
-	// }
+		pros::Task::delay(50);
+
+		//pros::Task::delay(500);
+	}
+
+	pros::lcd::print(0, "Final RTT: %d ms", average_rtt/50);
+
 
 #endif
 
@@ -149,19 +159,25 @@ void opcontrol() {
 	rx_link.transmit(expected, strlen(expected) + 1);
 	pros::lcd::print(2, "Transmitted: check");
 
-	// uint8_t buf = 0;
+	uint8_t buf = 0;
+	uint8_t ping_byte = 4;
 
-	// while (true) {
-	// 	rx_link.receive(&buf, 1);
+	while (true) {
+		while (true) {
+			int len = rx_link.receive(&buf, 1);
 
-	// 	// switch to transmit
-	// 	pros::Task::delay(50);
+			if (len > 0 && buf == ping_byte) {
+				break;
+			}
 
-	// 	rx_link.transmit(&buf, 1);
+			pros::delay(5);
+		}
 
-	// 	// switch back
-	// 	pros::Task::delay(50);
-	// }
+		rx_link.transmit((void*)&buf, 1);
+
+		// switch back
+		pros::Task::delay(50);
+	}
 #endif
 
 
