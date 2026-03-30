@@ -2,7 +2,7 @@
 #include <cstring>
 #include <string.h>
 
-#define IS_TRANSMITTER 0
+#define IS_TRANSMITTER 1
 #define TRANSMITTER_PORT 4
 #define RECEIVER_PORT 1
 
@@ -108,18 +108,18 @@ void opcontrol() {
             uint8_t dump[32];
             uint32_t avail = tx_link.raw_receivable_size();
             if (avail > sizeof(dump)) avail = sizeof(dump);
-            tx_link.receive(dump, avail);
+            tx_link.receive_raw(dump, avail);
         }
 
         uint32_t send_time = pros::millis();
-        tx_link.transmit(&ping_byte, sizeof(uint32_t));
+        tx_link.transmit_raw(&ping_byte, sizeof(uint32_t));
 
         response = 0;
         bool got_echo = false;
 
         // wait for echo with timeout
         while (pros::millis() - send_time < 500) {
-            int len = tx_link.receive(&response, sizeof(response));
+            int len = tx_link.receive_raw(&response, sizeof(response));
             if (len == sizeof(response)) {
                 got_echo = true;
                 break;
@@ -154,11 +154,11 @@ void opcontrol() {
     uint32_t buf = 0;
 
     while (true) {
-        int len = rx_link.receive(&buf, sizeof(buf));
+        int len = rx_link.receive_raw(&buf, sizeof(buf));
         if (len == sizeof(buf)) {
             pros::lcd::print(4, "Received: %u", buf);
             // echo back exactly what we got
-            rx_link.transmit(&buf, sizeof(uint32_t));
+            rx_link.transmit_raw(&buf, sizeof(uint32_t));
         }
         pros::delay(5);
     }
