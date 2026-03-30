@@ -70,11 +70,14 @@ struct LinkedList
         {
             for(int j = 0; j < (8 - size); j ++)
             {
-                std::byte mask = (std::byte)1;
-                mask << i;
+                std::byte mask = (std::byte)1; // change ts to include # of blocks needed
+                mask <<= j;
 
-                if((nodes[STORING_SIZE + i] && mask) == mask) continue;
+                if((nodes[STORING_SIZE + i] & mask) == mask) continue;
 
+                nodes[STORING_SIZE + i] |= mask;
+
+                std::memcpy(&nodes[(i * 8) + j], &item, sizeof(item));
             }
         }
     }

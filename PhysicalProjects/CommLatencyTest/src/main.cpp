@@ -2,7 +2,7 @@
 #include <cstring>
 #include <string.h>
 
-#define IS_TRANSMITTER 1
+#define IS_TRANSMITTER 0
 #define TRANSMITTER_PORT 4
 #define RECEIVER_PORT 1
 
@@ -87,176 +87,81 @@ void autonomous() {}
 void opcontrol() {
 
 #if IS_TRANSMITTER
-	pros::Link tx_link(LINK_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-	pros::Task::delay(2000);
+    pros::Link tx_link(1, LINK_ID, pros::E_LINK_TX, true);
+    pros::delay(2000);
 
-	char* message = "check";
-	char* expected = "check";
-	char result[32];
+    while (!tx_link.connected()) {
+        pros::delay(20);
+    }
 
-	tx_link.transmit((void*)message, strlen(message) + 1);
-	tx_link.receive((void*)result, strlen(expected) + 1);
-	while(strcmp(result, expected) != 0)
-	{
-		pros::lcd::print(2, "Instead Received: %d", pros::millis());
-		tx_link.transmit((void*)message, strlen(message) + 1);
-		pros::delay(10);
-		tx_link.receive((void*)result, strlen(expected) + 1);
-		pros::delay(10);
-	}
+    pros::lcd::print(2, "TX Connected");
 
-	pros::lcd::print(2, "Received: check");
+    uint32_t ping_byte   = 0xFF * 8;
+    uint32_t response    = 0;
+    uint32_t average_rtt = 0;
 
-	uint8_t ping_byte = 4;
-	uint8_t response = 0;
-	uint32_t average_rtt = 0;
+    for (int i = 0; i < 50; i++) {
+        pros::lcd::print(0, "Iteration: %d", i);
 
-	for(int i = 0; i < 50; i++) {
-		uint32_t send_time = pros::millis();
+        // flush any stale bytes
+        while (tx_link.raw_receivable_size() > 0) {
+            uint8_t dump[32];
+            uint32_t avail = tx_link.raw_receivable_size();
+            if (avail > sizeof(dump)) avail = sizeof(dump);
+            tx_link.receive(dump, avail);
+        }
 
-		tx_link.transmit((void*)&ping_byte, sizeof(ping_byte));
+        uint32_t send_time = pros::millis();
+        tx_link.transmit(&ping_byte, sizeof(uint32_t));
 
-		while (true) {
-			int len = tx_link.receive(&response, 1);
+        response = 0;
+        bool got_echo = false;
 
-			if (len > 0 && response == ping_byte) {
-				break;
-			}
+        // wait for echo with timeout
+        while (pros::millis() - send_time < 500) {
+            int len = tx_link.receive(&response, sizeof(response));
+            if (len == sizeof(response)) {
+                got_echo = true;
+                break;
+            }
+            pros::delay(5);
+        }
 
-			pros::delay(5);
-		}
+        uint32_t rtt = got_echo ? (pros::millis() - send_time) : 500;
+        average_rtt += rtt;
 
-		uint32_t rtt = pros::millis() - send_time;
+        pros::lcd::print(1, "RTT: %d ms", rtt);
+        printf("RTT: %d ms (resp=%u)\n", rtt, response);
 
-		average_rtt += rtt;
-		pros::lcd::print(0, "RTT: %d ms", average_rtt);
+        pros::delay(50);
+    }
 
-		pros::Task::delay(50);
+    pros::lcd::print(0, "Final RTT: %d ms", average_rtt / 50);
+    pros::lcd::print(6, "Test complete");
+    while (true) pros::delay(100);
 
-		//pros::Task::delay(500);
-	}
+#else   // RECEIVER
 
-	pros::lcd::print(0, "Final RTT: %d ms", average_rtt/50);
+    pros::Link rx_link(1, LINK_ID, pros::E_LINK_RX, true);
+    pros::delay(2000);
 
+    while (!rx_link.connected()) {
+        pros::delay(20);
+    }
+
+    pros::lcd::print(2, "RX Connected");
+
+    uint32_t buf = 0;
+
+    while (true) {
+        int len = rx_link.receive(&buf, sizeof(buf));
+        if (len == sizeof(buf)) {
+            pros::lcd::print(4, "Received: %u", buf);
+            // echo back exactly what we got
+            rx_link.transmit(&buf, sizeof(uint32_t));
+        }
+        pros::delay(5);
+    }
 
 #endif
-
-#if !IS_TRANSMITTER
-	pros::Link rx_link(LINK_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-	pros::Task::delay(2000);
-
-	char* expected = "check";
-	char result[32];
-
-	rx_link.receive((void*)result, strlen(expected) + 1);
-	while(strcmp(result, expected) != 0)
-	{
-		pros::lcd::print(2, "nah Instead Received: %s", result);
-		rx_link.receive((void*)result, strlen(expected) + 1);
-		pros::delay(10);
-	}
-
-	rx_link.transmit(expected, strlen(expected) + 1);
-	pros::lcd::print(2, "Transmitted: check");
-
-	uint8_t buf = 0;
-	uint8_t ping_byte = 4;
-
-	while (true) {
-		while (true) {
-			int len = rx_link.receive(&buf, 1);
-
-			if (len > 0 && buf == ping_byte) {
-				break;
-			}
-
-			pros::delay(5);
-		}
-
-		rx_link.transmit((void*)&buf, 1);
-
-		// switch back
-		pros::Task::delay(50);
-	}
-#endif
-
-
-#pragma region ARIANA
-
-	// pros::Controller master(pros::E_CONTROLLER_MASTER);
-
-	// if(IS_TRANSMITTER)
-	// {
-	// 	pros::Link receiver(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-	// 	pros::delay(2000);
-	// 	char* expected = "Check";
-	// 	char result[32];
-
-	// 	int expectedLength = strlen(expected) + 1;
-	// 	receiver.receive((void*)result, expectedLength);	
-	// 	while(strcmp(result, expected) != 0)
-	// 	{
-	// 		pros::lcd::print(2, "Instead Received: %s", result);
-	// 		receiver.receive((void*)result, expectedLength);
-	// 		pros::delay(10);
-	// 	}
-	// 	pros::lcd::print(2, "Received: Check");
-
-	// 	pros::Link transmitter(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-	// 	char* message = "superimportantmessage";
-	// 	transmitter.transmit_raw(message, strlen(message) + 1);
-	// 	double startTime = pros::millis();
-
-	// 	expected = "recieved";
-	// 	char secondResult[32];
-
-	// 	//pros::Link receiver2(TRANSMITTER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-		
-	// 	expectedLength = strlen(expected) + 1;
-	// 	transmitter.receive_raw((void*)secondResult, expectedLength);
-	// 	while(strcmp(secondResult, expected) != 0)
-	// 	{
-	// 		pros::lcd::print(2, "Instead Received: %s", secondResult);
-	// 		pros::lcd::print(3, "Current: %f ms", pros::millis() - startTime);
-	// 		transmitter.receive_raw((void*)secondResult, expectedLength);
-	// 		pros::delay(10);
-	// 	}
-
-	// 	pros::lcd::print(4, "Latency: %f ms", pros::millis() - startTime);
-	// }
-	// else
-	// {
-	// 	pros::Link transmitter(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-	// 	pros::Link receiver(RECEIVER_PORT, "LINK_ID", pros::E_LINK_RECIEVER);
-	// 	pros::delay(2000);
-	// 	char* message = "Check";
-	// 	char* expected = "superimportantmessage";
-	// 	char result[32];
-
-	// 	int messageLength = strlen(message) + 1;
-	// 	int expectedLength = strlen(expected) + 1;
-	// 	receiver.receive_raw((void*)result, expectedLength);
-	// 	while(strcmp(result, expected) != 0)
-	// 	{
-	// 		pros::lcd::print(2, "Not Received: superimportantmessage");
-	// 		receiver.receive_raw((void*)result, expectedLength);
-
-	// 		transmitter.transmit_raw(message, messageLength);
-
-	// 		pros::delay(10);
-	// 	}
-		
-
-	// 	//pros::Link transmitter2(RECEIVER_PORT, "LINK_ID", pros::E_LINK_TRANSMITTER);
-
-	// 	message = "recieved";
-	// 	messageLength = strlen(message) + 1;
-	// 	while(true)
-	// 	{
-	// 		receiver.transmit_raw(message, messageLength);
-	// 		pros::lcd::print(2, "Transmitted: recieved");
-	// 		pros::delay(10);
-	// 	}
-	// }
-#pragma endregion
 }
