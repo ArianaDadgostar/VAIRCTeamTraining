@@ -140,6 +140,7 @@ void opcontrol() {
 				pros::lcd::print(2, "Recieved: Move");
 				left_receiver.move(20);
 				right_receiver.move(20);
+				left_receiver.();
 			}
 			else
 			{

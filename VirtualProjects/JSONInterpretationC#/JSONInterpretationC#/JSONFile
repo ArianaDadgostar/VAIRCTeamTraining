@@ -1,0 +1,17 @@
+{
+    "Camera" :
+    {
+        "exp" : 50
+    },
+
+    "ConvertColor" : 
+    {
+        "from" : "RGB",
+        "to" : "HSV"
+    },
+
+    "DetectContours" : 
+    {
+        
+    }
+}

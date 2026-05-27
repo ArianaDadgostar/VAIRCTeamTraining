@@ -78,8 +78,11 @@ struct LinkedList
                 nodes[STORING_SIZE + i] |= mask;
 
                 std::memcpy(&nodes[(i * 8) + j], &item, sizeof(item));
+
+                return true;
             }
         }
+        return false;
     }
 
 #endif
@@ -187,8 +190,8 @@ int main()
     int num = 4;
     long num2 = 5;
     list.allocate(num);
-    //list.allocate(num2);
-    //list.printSlots();
+    list.allocate(num2);
+    list.printSlots();
     //list.deAllocate(num);
     //list.printSlots();
 }

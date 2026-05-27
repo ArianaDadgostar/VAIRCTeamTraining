@@ -2,7 +2,7 @@
 #include <cstring>
 #include <string.h>
 
-#define IS_TRANSMITTER 1
+#define IS_TRANSMITTER 0
 #define TRANSMITTER_PORT 4
 #define RECEIVER_PORT 1
 
@@ -96,7 +96,8 @@ void opcontrol() {
 
     pros::lcd::print(2, "TX Connected");
 
-    uint32_t ping_byte   = 0xFF * 8;
+	std::array<unsigned char, 1> ping_byte;
+	ping_byte.fill(0);
     uint32_t response    = 0;
     uint32_t average_rtt = 0;
 
@@ -117,7 +118,6 @@ void opcontrol() {
         response = 0;
         bool got_echo = false;
 
-        // wait for echo with timeout
         while (pros::millis() - send_time < 500) {
             int len = tx_link.receive_raw(&response, sizeof(response));
             if (len == sizeof(response)) {
@@ -151,7 +151,7 @@ void opcontrol() {
 
     pros::lcd::print(2, "RX Connected");
 
-    uint32_t buf = 0;
+	std::array<unsigned char, 1> buf;
 
     while (true) {
         int len = rx_link.receive_raw(&buf, sizeof(buf));
