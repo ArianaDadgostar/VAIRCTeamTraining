@@ -10,16 +10,9 @@ using System.Reflection.Metadata.Ecma335;
 
 class Program
 {
-    public interface IComputerVision { public string identification { get; } }
-    class Camera : IComputerVision
-    {
-        public string identification { get; } = "Camera";
-    }
-
-    class ConvertColor : IComputerVision
-    {
-        public string identification { get; } = "ConvertColor";
-    }
+    public interface IComputerVision {}
+    class Camera : IComputerVision { int exp {get; set; } }
+    class ConvertColor : IComputerVision { string to {get; set; } string from {get; set; } }
 
     public void Interpret(string input, IComputerVision computerVision)
     {
