@@ -9,9 +9,4 @@
         "from" : "RGB",
         "to" : "HSV"
     },
-
-    "DetectContours" : 
-    {
-        
-    }
 }
