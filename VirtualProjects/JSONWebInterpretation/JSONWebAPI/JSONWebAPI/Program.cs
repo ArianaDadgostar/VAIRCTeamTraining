@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+// See https://aka.ms/new-console-template for more information
 
 using System.ComponentModel.Design.Serialization;
 
@@ -581,13 +581,15 @@ class Program
 
     static void Main(string[] args)
     {
-        string file = File.ReadAllText("JSONFile.txt");
-        List<IComputerVision> pipeline = new List<IComputerVision>();
-        file = file.Replace("\"", "");
-        foreach(string line in file.Split("},")){
-            pipeline.Add(Factory.FullFeature(line));
-        }
+        // string file = File.ReadAllText("JSONFile.txt");
+        // List<IComputerVision> pipeline = new List<IComputerVision>();
+        // file = file.Replace("\"", "");
+        // foreach(string line in file.Split("},")){
+        //     pipeline.Add(Factory.FullFeature(line));
+        // }
 
-        MacCameraFeed(pipeline);
+        // MacCameraFeed(pipeline);
+
+        
     }
 }
