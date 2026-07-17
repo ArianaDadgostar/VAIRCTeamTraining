@@ -1,45 +1,43 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
 
-function MyButton() {
-  return (
-    <button>
-      I'm a button
-    </button>
-  );
-}
-
-export default function Application()
-{
-  const[apiResponse, updateAPIResponse] = useState(null)
-  const Camera = async() => {
-    const response = await fetch("http://localhost:5173/Interpreter/Camera", { 
-      method: "POST",
-      headers: { "Content-Type": "application/json",
-                 "Accept" : "image/jpeg"}, // FIX "image" type!!
-      body: JSON.stringify({ key: value })
-    })
-    const image = URL.createObjectURL(await response().blob())
-    updateAPIResponse(image);
-  }
-
+function Scrollbars({ exposure, setExposure }) {  // accept as props
   return (
     <div>
-        <button onClick={Camera}>Camera</button>
-        <scrollbars>exposure</scrollbars>
-        {apiResponse && <img src={apiResponse} alt="result" />}
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={exposure}
+        onChange={(e) => setExposure(e.target.value)}
+      />
+      <label>Exposure: {exposure}</label>
     </div>
   );
 }
 
-function MyApp() {
+export default function Application() {
+  const [apiResponse, updateAPIResponse] = useState(null);
+  const [exposure, setExposure] = useState(50);
+
+  const Camera = async () => {
+    const response = await fetch("http://localhost:5173/Interpreter/Camera", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "image/jpeg"
+      },
+      body: JSON.stringify({ key: exposure })  // use state directly
+    });
+    const image = URL.createObjectURL(await response.blob());  // fixed response()
+    updateAPIResponse(image);
+  };
+
   return (
     <div>
-      <h1>Welcome to my app</h1>
-      <MyButton />
+      <button onClick={Camera}>Camera</button>
+      <Scrollbars exposure={exposure} setExposure={setExposure} />  {/* pass props */}
+      {apiResponse && <img src={apiResponse} alt="result" />}
     </div>
   );
 }
