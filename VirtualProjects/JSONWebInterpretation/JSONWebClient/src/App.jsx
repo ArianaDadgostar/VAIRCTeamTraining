@@ -20,18 +20,29 @@ export default function Application() {
   const [apiResponse, updateAPIResponse] = useState(null);
   const [exposure, setExposure] = useState(50);
 
-  const Camera = async () => {
-    const response = await fetch("http://localhost:5173/Interpreter/Camera", {
+const Camera = async () => {
+  try {
+    const response = await fetch("http://localhost:5112/Interpreter/Camera", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "image/jpeg"
-      },
-      body: JSON.stringify({ key: exposure })  // use state directly
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: exposure })
     });
-    const image = URL.createObjectURL(await response.blob());  // fixed response()
-    updateAPIResponse(image);
-  };
+
+    console.log("Status:", response.status);
+
+    if (!response.ok) {
+      console.error("Request failed:", response.status, await response.text());
+      return;
+    }
+
+    const blob = await response.blob();
+    console.log("Content-Type:", blob.type, "Size:", blob.size);
+
+    updateAPIResponse(URL.createObjectURL(blob));
+  } catch (err) {
+    console.error("Fetch error:", err);
+  }
+};
 
   return (
     <div>

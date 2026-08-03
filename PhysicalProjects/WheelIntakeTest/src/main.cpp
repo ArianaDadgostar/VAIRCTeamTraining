@@ -25,28 +25,18 @@ enum class SortingPneumatics
     RIGHT
 };
 
-enum class MotorDirection
-{
-    FORWARD,
-    OFF
-};
-
 enum ButtonPressed
 {
     NotPressed,
-    Pressed,
-    Released,
-    MannualEntry
+    Pressed
 };
 
 class Button
 {
     public:
-        int power;
         vex::controller::button button;
         ButtonPressed state;
         bool toggled;
-        timer mannual;
 
         Button(vex::controller::button button)
         {
@@ -58,50 +48,26 @@ class Button
 
 #pragma region BasicProgramFunctions
 
-bool ButtonPressingLogic(Button &buttonInfo)
+bool IsBumped(Button &buttonInfo)
 {
-    switch (buttonInfo.state)
+    switch(buttonInfo.state)
     {
-    case NotPressed:
-    {
-        if (!buttonInfo.button.pressing()) break;
-        
-        buttonInfo.mannual.reset();
-        buttonInfo.state = Pressed;
-
-        break;
+        case NotPressed:
+            if(buttonInfo.button.pressing())
+            {
+                buttonInfo.state = Pressed;
+                return false;
+            }
+            break;
+        case Pressed:
+            if(!buttonInfo.button.pressing())
+            {
+                buttonInfo.state = NotPressed;
+                buttonInfo.toggled = !buttonInfo.toggled;
+                return true;
+            }
+            break;
     }
-
-    case Pressed:
-    {
-        if (!buttonInfo.button.pressing())
-        {
-            buttonInfo.state = Released;
-            // if(buttonInfo.mannual.time() <= 1000) break;
-            // buttonInfo.state = MannualEntry;
-        }
-        break;
-    }
-
-    case Released:
-    {
-        buttonInfo.toggled = !buttonInfo.toggled;
-        buttonInfo.state = NotPressed;
-        return true;
-    }
-
-    case MannualEntry:
-    {
-        if (buttonInfo.button.pressing())
-        {
-            buttonInfo.mannual.reset();
-            buttonInfo.state = Pressed;
-        }
-
-        break;
-    }
-    }
-
     return false;
 }
 
@@ -112,47 +78,49 @@ void SetMotor(vex::motor motor, int power, int direction)
 
 #pragma endregion
 
-void RunSorter()
+void RunSorter(Button &leftSorter, Button &rightSorter)
 {
+    IsBumped(leftSorter);
+    IsBumped(rightSorter);
     vex::cylinderType cylinder;
-    if(!Controller.ButtonFUp.pressing() && !Controller.ButtonFDown.pressing())
+
+    if(leftSorter.toggled)
     {
         sorter.extend(vex::cylinderType(SortingPneumatics::LEFT));
-        sorter.extend(vex::cylinderType(SortingPneumatics::RIGHT));
-        return;
     }
-    else
+    else{
+        sorter.retract(vex::cylinderType(SortingPneumatics::LEFT));
+    }
+
+    if(rightSorter.toggled)
     {
-        cylinder = (Controller.ButtonFUp.pressing()) ? vex::cylinderType(SortingPneumatics::LEFT) : vex::cylinderType(SortingPneumatics::RIGHT);
+        sorter.extend(vex::cylinderType(SortingPneumatics::RIGHT));
     }
-    sorter.retract(cylinder);
+    else{
+        sorter.retract(vex::cylinderType(SortingPneumatics::RIGHT));
+    }
+}
+
+void RunConveyor(Button &conveyor)
+{
+    IsBumped(conveyor);
+    int power = (conveyor.toggled) ? 100 : 0;
+
+    SetMotor(topLeft, power, 1);
+    SetMotor(topRight, power, 1);
 }
 
 int main() {
 
-    Button rightClaw = Button(Controller.ButtonRUp);
+    Button leftSorter = Button(Controller.ButtonFUp);
+    Button rightSorter = Button(Controller.ButtonFDown);
 
-    Button lClawReset = Button(Controller.ButtonLDown);
-    Button rClawReset = Button(Controller.ButtonRDown);
-
-    MotorDirection direction = MotorDirection::FORWARD;
-
+    Button conveyor = Button(Controller.ButtonEUp);
     
-    sorter.pumpOn();
 
     while(true) {
-        direction = (Controller.ButtonEUp.pressing()) ? MotorDirection::FORWARD : MotorDirection::OFF;
-        switch(direction)
-        {
-            case MotorDirection::FORWARD:
-                SetMotor(topLeft, 100, 1);
-                SetMotor(topRight, 100, 1);
-                break;
-            case MotorDirection::OFF:
-                SetMotor(topLeft, 0, 0);
-                SetMotor(topRight, 0, 0);
-                break;
-        }
-        RunSorter();
+        sorter.pumpOn();
+        RunSorter(leftSorter, rightSorter);
+        RunConveyor(conveyor);
     }
 }

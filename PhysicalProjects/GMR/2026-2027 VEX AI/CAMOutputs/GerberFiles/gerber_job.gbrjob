@@ -1,0 +1,24 @@
+{
+    "Header": {
+        "Comment": "All values are metric (mm)",
+        "CreationDate": "2026-07-23T23:52:00Z",
+        "GenerationSoftware": {
+            "Application": "Fusion Electronics",
+            "Vendor": "Autodesk",
+            "Version": "9.7.0"
+        },
+        "Part": "Single"
+    },
+    "Overall": {
+        "BoardThickness": 1.6608,
+        "LayerNumber": 2,
+        "Name": {
+            "ProjectId": "PCB"
+        },
+        "Owner": "Ariana Dadgostar <ariana.dadgostar@gmail.com>",
+        "Size": {
+            "X": 16.25,
+            "Y": 15.25
+        }
+    }
+}
