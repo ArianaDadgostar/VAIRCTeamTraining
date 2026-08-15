@@ -22,7 +22,7 @@ export default function Application() {
 
 const Camera = async () => {
   try {
-    const response = await fetch("http://localhost:5112/Interpreter/Camera", {
+    const response = await fetch("/Interpreter/Camera", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: exposure })

@@ -8,13 +8,22 @@ namespace JSONWebAPI.Controllers
     [Route("[controller]")]
     public class InterpreterController : ControllerBase
     {
-        static int count = 0;
-
-        [HttpGet("Camera")]
-        public Mat Camera(int exp)
+        [HttpPost("Camera")]
+        public IActionResult Camera([FromBody] CameraRequest request)
         {
-            string file = $"{{\"Camera\": {{\"exp\": {exp}}}}}";
-            return JSONWebAPI.Program.MacCameraFeed(file);
+            string file = $"{{\"Camera\": {{\"exp\": {request.key}}},}}";
+            Mat frame = JSONWebAPI.Program.MacCameraFeed(file);
+
+            if (frame == null || frame.Empty())
+                return StatusCode(500, "Could not capture frame");
+
+            Cv2.ImEncode(".jpg", frame, out byte[] jpegBytes);
+            return File(jpegBytes, "image/jpeg");
         }
+    }
+
+    public class CameraRequest
+    {
+        public int key { get; set; }
     }
 }

@@ -9,6 +9,7 @@ using Microsoft.VisualBasic;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.Versioning;
 using OpenCvSharp;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -624,7 +625,7 @@ namespace JSONWebAPI
 
                             foreach(IComputerVision feature in pipeline){
                                 if(feature == null) continue;
-                                return RunPipeline(feature, capture, frame);
+                                return RunPipeline(feature, capture, frame).Clone();
                             }
 
                             if (frame.Empty()) break;

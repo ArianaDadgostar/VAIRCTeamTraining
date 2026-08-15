@@ -1,0 +1,6 @@
+@DemosaicAPI_HostAddress = http://localhost:5027
+
+GET {{DemosaicAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
