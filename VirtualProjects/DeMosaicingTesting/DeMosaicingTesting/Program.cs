@@ -13,7 +13,7 @@ namespace DemosaicAPI
         public static int Hue_Transit(int g1, int g2, int g3, int v1, int v3)
         {
             if((g1 < g2 && g2 < g3) || (g1 > g2 && g2 > g3)) 
-                return v1 + ((v3 - v1) * (g2 - g1) / (g3 - g1));
+                return v1 + (v3 - v1) * (g2 - g1) / (g3 - g1);
             
             return (v1 + v3) / 2 + (g2 * 2 - g1 - g3) / 4;
         }
@@ -103,7 +103,7 @@ namespace DemosaicAPI
             //         }
             //     }
             // }
-
+            index = 2;
             for(int i = 2; i < mat.Rows - 2; i += 1 )
             {
                 for(int j = index; j < mat.Cols - 1; j += 2)
@@ -131,18 +131,19 @@ namespace DemosaicAPI
                 {
                     current = i * mat.Cols + j;
 
-                    RGBVals[current][2] = (byte)PixelGrouping.Hue_Transit
-                        (RGBVals[current - 1][1], // GREEN --> BLUE
-                        RGBVals[current][1],
-                        RGBVals[current + 1][1], 
-                        RGBVals[current - 1][2], 
-                        RGBVals[current + 1][2]);
                     RGBVals[current][0] = (byte)PixelGrouping.Hue_Transit
                         (RGBVals[current - mat.Cols][1], // GREEN --> RED
                         RGBVals[current][1],
                         RGBVals[current + mat.Cols][1],
                         RGBVals[current - mat.Cols][0],
                         RGBVals[current + mat.Cols][0]);
+
+                    RGBVals[current][2] = (byte)PixelGrouping.Hue_Transit
+                        (RGBVals[current - 1][1], // GREEN --> BLUE
+                        RGBVals[current][1],
+                        RGBVals[current + 1][1], 
+                        RGBVals[current - 1][2], 
+                        RGBVals[current + 1][2]);
                 }
                 index = (index == 2) ? 1 : 2;
             }
@@ -152,9 +153,11 @@ namespace DemosaicAPI
             {
                 for(int j = index; j < mat.Cols - 2; j += 2)
                 {
+                    current = i * mat.Cols + j;
                     value = (index == 2) ? 0 : 2;
                     altValue = (value == 0) ? 2 : 0;
-                    RGBVals[current][value] = (byte)PixelGrouping.Calculate_Diagonal(RGBVals[current][value],
+                    RGBVals[current][value] = (byte)PixelGrouping.Calculate_Diagonal
+                        (RGBVals[current][value],
                         RGBVals[current - mat.Cols + 2][value], // NE
                         RGBVals[current + mat.Cols + 2][value], // SE
                         RGBVals[current - mat.Cols - 2][value], // NW
