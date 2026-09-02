@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Diagnostics;
 using OpenCvSharp;
 
 namespace DemosaicAPI
@@ -64,9 +65,24 @@ namespace DemosaicAPI
     class Program
     {
         static Mat mat = new Mat("/Users/arianadadgostar/Documents/VEX_AI_Arena_3ms_Exposure_0dB_Gain.bmp", ImreadModes.Color);
-
+        static Mat gray = new Mat("/Users/arianadadgostar/Documents/VEX_AI_Arena_3ms_Exposure_0dB_Gain.bmp", ImreadModes.Unchanged);
+        static Mat openCV = new Mat();
         static void Main(string[] args)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Reset();
+            stopwatch.Start();
+
+            Cv2.CvtColor(gray, openCV, ColorConversionCodes.BayerBG2BGR);
+
+            stopwatch.Stop();
+            Console.WriteLine("OpenCV: " + stopwatch.ElapsedMilliseconds);
+            Cv2.ImShow("My Image", openCV);
+            Cv2.WaitKey(0); 
+            Cv2.DestroyAllWindows();
+
+            stopwatch.Reset();
+            stopwatch.Start();
             //Vec3b pixel = mat.At<Vec3b>(i, j);
             int index = 0;
             int current = 0;
@@ -176,6 +192,8 @@ namespace DemosaicAPI
             }
 
             mat.SetArray(RGBVals);
+            stopwatch.Stop();
+            Console.WriteLine("Pixel Grouping: " + stopwatch.ElapsedMilliseconds);
             Cv2.ImShow("My Image", mat);
             Cv2.WaitKey(0); 
             Cv2.DestroyAllWindows();

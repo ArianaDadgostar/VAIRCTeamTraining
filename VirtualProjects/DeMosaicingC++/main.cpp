@@ -65,6 +65,20 @@ class PixelGrouping
 int main() {
 
     Mat mat = imread("/Users/arianadadgostar/Documents/VEX_AI_Arena_3ms_Exposure_0dB_Gain.bmp", IMREAD_COLOR);
+    Mat gray = imread("/Users/arianadadgostar/Documents/VEX_AI_Arena_3ms_Exposure_0dB_Gain.bmp", IMREAD_GRAYSCALE);
+    Mat openCV;
+    std::clock_t start = std::clock();
+
+    cv::cvtColor(gray, openCV, cv::COLOR_BayerBG2BGR);
+
+    std::clock_t end = std::clock();
+
+    printf("\n OpenCV: %ld", end - start);
+    imshow("My Image", openCV);
+    waitKey(0);
+
+    start = std::clock();
+
     int index = 0;
     int current = 0;
     int value = 0;
@@ -153,6 +167,8 @@ int main() {
         cin.get();
         return -1;
     }
+    end = std::clock();
+    printf("\n Pixel Grouping: %ld", end - start);
     imshow("My Image", mat);
     waitKey(0);
     return 0;
