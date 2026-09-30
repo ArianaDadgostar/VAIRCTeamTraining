@@ -1,5 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+// run with       g++ -std=c++17 -g main.cpp -o main $(pkg-config --cflags --libs opencv5)
+// and with       ./main
+
 using System.Diagnostics;
 using OpenCvSharp;
 
