@@ -5,38 +5,40 @@ namespace StitchingTest
 {
     public static class VendingMachine
     {
-        public static double[] coins = { 1.00, 0.5, 0.25, 0.1, 0.05, 0.01 };
-        public static Dictionary<double, int> Bank = new Dictionary<double, int>()
+        public static Dictionary<int, int> Bank = new Dictionary<int, int>()
         {
-            {1.00, 1},
-            {0.5, 2},
-            {0.25, 3},
-            {0.1, 3},
+            {100, 1},
+            {50, 2},
+            {25, 3},
+            {5, 3},
+            {4, 3},
+            {1, 3},
         };
 
-        public static int GetOptimal(double amount)
+        public static int GetOptimal(int amount)
         {
             int index = 0;
 
-            for(int i = 0; i < coins.Length; i++)
+            for(int i = 0; i < Bank.Count; i++)
             {
-                if(coins[i] > amount) continue;
+                if(Bank.ElementAt(i).Key > amount) continue;
 
                 index = i;
                 break;
             }
-            int count = (amount % coins[index] > 0) ? (int)(amount / coins[index]) + 1 : (int)(amount / coins[index]);
+            int coin = Bank.ElementAt(index).Key;
+            int count = (amount % coin > 0) ? (int)(amount / coin) + 1 : (int)(amount / coin);
 
             return count;
         }
 
-        public static double[] AnalyzePossibilities(double amount)
+        public static int[] AnalyzePossibilities(int amount)
         {
             int coinCount = GetOptimal(amount);
-            double[] combination = new double[coinCount];
+            int[] combination = new int[coinCount];
             while(!EqualsAmount(amount, combination) && coinCount <= Bank.Count)
             {
-                combination = new double[coinCount];
+                combination = new int[coinCount];
                 RecursiveAnalyzation(amount, coinCount, 0, combination);
                 coinCount++;
             }
@@ -44,10 +46,10 @@ namespace StitchingTest
             return combination;
         }
 
-        public static bool EqualsAmount(double amount, double[] combination)
+        public static bool EqualsAmount(int amount, int[] combination)
         {
-            double total = 0;
-            foreach(double coin in combination)
+            int total = 0;
+            foreach(int coin in combination)
             {
                 total += coin;
             }
@@ -56,18 +58,33 @@ namespace StitchingTest
             return false;
         }
 
-        public static void RecursiveAnalyzation(double amount, int coinCount, int currentIndex, double[] combination)
+        public static bool CanGiveCoin(int amount, int[] combination)
         {
-            foreach(double coin in Bank.Keys)
+            int count = 0;
+            foreach(int coin in combination)
+            {
+                if(coin != amount) continue;
+
+                count++;
+            }
+            if(count >= Bank[amount]) return false;
+            return true;
+        }
+
+        public static bool RecursiveAnalyzation(int amount, int coinCount, int currentIndex, int[] combination)
+        {
+            foreach(int coin in Bank.Keys)
             {
                 if(Bank[coin] <= 0) continue;
+                if(!CanGiveCoin(coin, combination)) continue;
                 combination[currentIndex] = coin;
                 
-                if(EqualsAmount(amount, combination)) return;
+                if(EqualsAmount(amount, combination)) return true;
                 if(currentIndex >= coinCount - 1) continue;
 
-                RecursiveAnalyzation(amount, coinCount, currentIndex + 1, combination);
+                if(RecursiveAnalyzation(amount, coinCount, currentIndex + 1, combination)) return true;
             }
+            return false;
         }
     }
 
@@ -78,15 +95,15 @@ namespace StitchingTest
             while(true)
             {
                 Console.WriteLine("How much is your change? ");
-                double change = double.Parse(Console.ReadLine());
-                double[] coins = VendingMachine.AnalyzePossibilities(change);
+                int change = int.Parse(Console.ReadLine());
+                int[] coins = VendingMachine.AnalyzePossibilities(change);
                 if(coins == null)
                 {
                     Console.WriteLine("No tengo ts sorry");
                     continue;
                 }
                 
-                foreach(double coin in coins)
+                foreach(int coin in coins)
                 {
                     Console.WriteLine(coin);
                 }
