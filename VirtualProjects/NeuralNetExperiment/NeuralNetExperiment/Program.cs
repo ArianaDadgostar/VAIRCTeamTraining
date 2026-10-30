@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System;
+using System.Security.Principal;
 
 namespace LinkedListExperiment
 {
@@ -20,9 +21,9 @@ namespace LinkedListExperiment
 
     class LinkedList<T> where T : IComparable<T>
     {
-        Node<T> head;
-        Node<T> tail;
-        Stack<Node<T>> Removed;
+        public Node<T> head;
+        public Node<T> tail;
+        public Stack<Node<T>> Removed;
 
         public LinkedList()
         {
@@ -63,22 +64,23 @@ namespace LinkedListExperiment
             head.next.previous = head;
         }
 
-        public void Remove(T value)
+        public Node<T> Remove(T value, Node<T> node)
         {
-            Node<T> current = head;
-            while(current != tail)
+            Node<T> current = node;
+            if(head == tail || head == null) return null;
+            if(current == tail) return current;
+
+            if(!current.value.Equals(value))
             {
-                if(!current.value.Equals(value))
-                {
-                    current = current.next;
-                    continue;
-                }
-                
-                Removed.Push(current);
-                current.next.previous = current.previous;
-                current.previous.next = current.next;
-                return;
+                current.next = Remove(value, current.next);
+                return current;
             }
+            
+            Removed.Push(current);
+            current.next.previous = current.previous;
+            current.previous.next = current.next;
+            current = current.next;
+            return current;
         }
 
         public void Print()
@@ -94,17 +96,50 @@ namespace LinkedListExperiment
 
         public void Undo()
         {
+            if(Removed.Count == 0) return;
             Node<T> recent = Removed.Pop();
 
             Node<T> current = head;
+            if(current == null)
+            {
+                head = recent;
+                head.next = recent;
+                head.previous = recent;
+                tail = recent;
+                tail.next = recent;
+                tail.previous = recent;
+                return;
+            }
             while(current != tail)
             {
-                if(current != recent.previous) continue;
+                if(current != recent.previous) 
+                {
+                    if(current == current.next) return;
+                    current = current.next;
+                    continue;
+                }
                 
                 current.next.previous = recent;
                 current.next = recent;
                 return;
             }
+            if(current != recent.previous) return;
+            current.next.previous = recent;
+            current.next = recent;
+        }
+    
+        public int GetCount()
+        {
+            if(head == null) return 0;
+            int count = 0;
+            Node<T> current = head;
+            while(current != tail)
+            {
+                current = current.next;
+                count++;
+            }
+            count++;
+            return count;
         }
     }
 
@@ -135,7 +170,7 @@ namespace LinkedListExperiment
                         Console.WriteLine("What value do you want to remove? ");
                         int value = int.Parse(Console.ReadLine() ?? "");
                         
-                        linkedList.Remove(value);
+                        linkedList.head = linkedList.Remove(value, linkedList.head);
                         break;
                     }
 
@@ -153,13 +188,87 @@ namespace LinkedListExperiment
             }
         }
 
+        static int FindSum(List<int> values)
+        {
+            int sum = 0;
+            foreach(int value in values)
+            {
+                sum += value;
+            }
+            return sum;
+        }
+
+        static List<int> SearchCombinations(LinkedList<int> linkedList, List<int> chosen, int goal)
+        {
+            Node<int> current = linkedList.head;
+            int sum = FindSum(chosen);
+            int removeCount = 0;
+            while(linkedList.head != null)
+            {
+                linkedList.head = linkedList.Remove(current.value, linkedList.head);
+                removeCount++;
+                if(sum + current.value > goal)
+                {
+                    current = current.next;
+                    continue;
+                }
+                chosen.Add(current.value);
+
+                if(sum + current.value == goal) return chosen;
+
+                List<int> result = SearchCombinations(linkedList, chosen, goal); // 10/27 CREATION OF TAIL WITHIN UNDO IS FLAWED
+                if(result != null) return result;
+
+                for(int i = 0; i < removeCount; i++)
+                {
+                    linkedList.Undo();
+                }
+            }
+            return null;
+        }
+
+        static List<int> TraversePossibilities(LinkedList<int> linkedList, int goal)
+        {
+            Node<int> current = linkedList.head;
+            while(current != linkedList.tail)
+            {
+                List<int> chosen = new List<int>();
+                chosen = SearchCombinations(linkedList, chosen, goal);
+                if(chosen != null) return chosen;
+                current = current.next;
+            }
+            return null;
+        }
+
         static int Main(string[] args)
         {
             LinkedList<int> linkedList = new LinkedList<int>();
-            while(true)
+
+            linkedList.Insert(147, 0);
+            linkedList.Insert(95, 0);
+            linkedList.Insert(219, 100);
+            linkedList.Insert(130, 219);
+            linkedList.Insert(90, 100);
+            linkedList.Insert(178, 85);
+            linkedList.Insert(240, 178);
+            linkedList.Insert(70, 85);
+
+            linkedList.Print();
+            List<int> result = TraversePossibilities(linkedList, 255);
+            if(result != null)
             {
-                Actions(linkedList);
+                Console.WriteLine("Found a combination that sums to 500: ");
+                foreach(int value in result)
+                {
+                    Console.WriteLine(value);
+                }
             }
+            else
+            {
+                Console.WriteLine("No combination found that sums to 500.");
+            }
+
+            return 0;
         }
     }
 
