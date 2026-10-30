@@ -67,7 +67,11 @@ namespace LinkedListExperiment
         public Node<T> Remove(T value, Node<T> node)
         {
             Node<T> current = node;
-            if(head == tail || head == null) return null;
+            if(head == tail || head == null)
+            {
+                Removed.Push(current);
+                return null;
+            }
             if(current == tail) return current;
 
             if(!current.value.Equals(value))
@@ -112,20 +116,22 @@ namespace LinkedListExperiment
             }
             while(current != tail)
             {
-                if(current != recent.previous) 
+                if(current != recent.next) 
                 {
                     if(current == current.next) return;
                     current = current.next;
                     continue;
                 }
+                head = (head == current) ? recent : head;
                 
-                current.next.previous = recent;
-                current.next = recent;
+                current.previous.next = recent;
+                current.previous = recent;
                 return;
             }
-            if(current != recent.previous) return;
-            current.next.previous = recent;
-            current.next = recent;
+            if(current != recent.next) return;
+            current.previous.next = recent;
+            current.previous = recent;
+            head = recent;
         }
     
         public int GetCount()
@@ -205,7 +211,7 @@ namespace LinkedListExperiment
             int removeCount = 0;
             while(linkedList.head != null)
             {
-                linkedList.head = linkedList.Remove(current.value, linkedList.head);
+                linkedList.head =linkedList.Remove(current.value, linkedList.head);
                 removeCount++;
                 if(sum + current.value > goal)
                 {
@@ -219,10 +225,12 @@ namespace LinkedListExperiment
                 List<int> result = SearchCombinations(linkedList, chosen, goal); // 10/27 CREATION OF TAIL WITHIN UNDO IS FLAWED
                 if(result != null) return result;
 
-                for(int i = 0; i < removeCount; i++)
-                {
-                    linkedList.Undo();
-                }
+                chosen.RemoveAt(chosen.Count - 1);
+                current = current.next;
+            }
+            for(int i = 0; i < removeCount; i++)
+            {
+                linkedList.Undo();
             }
             return null;
         }
