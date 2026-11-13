@@ -17,6 +17,13 @@ namespace LinkedListExperiment
             this.previous = previous;
             this.next = next;
         }
+
+        public Node(T value)
+        {
+            this.value = value;
+            this.previous = null;
+            this.next = null;
+        }
     }
 
     class LinkedList<T> where T : IComparable<T>
@@ -253,7 +260,8 @@ namespace LinkedListExperiment
             LinkedList<int> linkedList = new LinkedList<int>();
 
             linkedList.Insert(147, 0);
-            linkedList.Insert(95, 0);
+            linkedList.Insert(95, 147);
+            linkedList.Insert(100, 95);
             linkedList.Insert(219, 100);
             linkedList.Insert(130, 219);
             linkedList.Insert(90, 100);
@@ -262,6 +270,7 @@ namespace LinkedListExperiment
             linkedList.Insert(70, 85);
 
             linkedList.Print();
+            return 1;
             List<int> result = TraversePossibilities(linkedList, 255);
             if(result != null)
             {
