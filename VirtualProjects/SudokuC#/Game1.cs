@@ -1,18 +1,22 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace SudokuC_;
 
 public class Game1 : Game
 {
-    /*
 
-        = new int[] {3, 0, 0},
+    List<int[]> setup = new List<int[]> {new int[] {3, 0, 0},
                                 new int[] {0, 1, 0},
-                                new int[] {1, 0, 2};
-    */
+                                new int[] {1, 0, 2}};
+
+    int[] allowedNumbers = {1, 2, 3};
+
+    Sudoku sudoku;
     private GraphicsDeviceManager _graphics;
     private SpriteBatch spriteBatch;
 
@@ -31,6 +35,16 @@ public class Game1 : Game
 
         line = new Texture2D(GraphicsDevice, 1, 1);
         line.SetData(new[] { Color.White });
+
+        sudoku = new(setup, allowedNumbers);
+        sudoku.SetupPossibilities(new List<int>(), new List<int>());
+        
+        Node<int[]> current = sudoku.possibilities.head;
+        for(int i = 0; i < sudoku.possibilities.GetCount(); i++)
+        {
+            Console.WriteLine(current.value[0] + current.value[1] + current.value[2]);
+        }
+        Console.WriteLine("haha");
 
         base.Initialize();
     }

@@ -17,11 +17,18 @@ public class Node<T>
     }
 }
 
-public class LinkedList<T> where T : IComparable<T>
+public class LinkedList<T> : IComparer
 {
     public Node<T> head;
     public Node<T> tail;
     public Stack<Node<T>> Removed;
+
+    public int Compare(object? object1, object? object2)
+    {
+        if(object1.Equals(object2)) return 0;
+
+        return 1;
+    }
 
     public bool Insert(T value, T previous)
     {
