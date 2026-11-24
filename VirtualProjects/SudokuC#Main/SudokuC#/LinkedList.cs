@@ -23,6 +23,12 @@ public class LinkedList<T> : IComparer
     public Node<T> tail;
     public Stack<Node<T>> Removed;
 
+    public LinkedList()
+    {
+        head = tail = null;
+        Removed = new Stack<Node<T>>();
+    }
+
     public int Compare(object? object1, object? object2)
     {
         if(object1.Equals(object2)) return 0;
@@ -32,19 +38,19 @@ public class LinkedList<T> : IComparer
 
     public bool Insert(T value, T previous)
     {
-        Node<T> addition = new(value);
-        Node<T> current = head;
+        (Node<T> addition, Node<T> current) = (new(value), head);
 
         if(head is null)
         {
-            head = head.next = head.previous = addition;
+            head = tail = addition;
+            head.next = head.previous = tail;
+            tail.next = tail.previous = head;
             return true;
         }
 
         while(true)
         {
             if(current.value.Equals(previous)) break;
-
             if(current == tail) return false;
 
             current = current.next;
@@ -52,8 +58,8 @@ public class LinkedList<T> : IComparer
 
         tail ??= addition;
 
-        current.next.next.previous = addition;
-        addition.next = current.next.next;
+        current.next.previous = addition;
+        addition.next = current.next;
         current.next = addition;
         addition.previous = current;
 

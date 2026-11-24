@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Security.Principal;
 
 namespace SudokuC_;
@@ -21,28 +22,47 @@ public class Sudoku
         this.possibilities = new LinkedList<int[]>();
     }
 
-    public void GenerateNumber(List<int> indexes, List<int> remaining, int index, List<int[]> gathered, int[] number)
+    public void GenerateNumber(List<int> indexes, List<int> remaining, List<int[]> gathered, int[] number, int currentIndex)
     {
         if(indexes.Count == 0) return;
-        Console.WriteLine("index count" + indexes.Count);
-        int current = indexes[0];
-        indexes.Remove(current);
 
         int chosen;
+        int current;
         for(int i = 0; i < remaining.Count; i++)
         {
             if(remaining[i] == 0) continue;
-
+            
+            current = indexes[currentIndex];
             chosen = remaining[i];
+            indexes[currentIndex] = 0;
             remaining[i] = 0;
 
             number[current] = chosen;
 
-            if(indexes.Count == 0) gathered.Add(number);
-
-            GenerateNumber(indexes, remaining, index + 1, gathered, number);
+            if(indexes.Max() == 0) // CHECKS IF ALL INDEXES ARE SATISFIED
+            {
+                gathered.Add(number);
+            }
+            else GenerateNumber(indexes, remaining, gathered, number, currentIndex + 1);
 
             remaining[i] = chosen;
+            indexes[currentIndex] = current;
+        }
+    }
+
+    public void DefinePossibilities(List<int[]> generated, int[] row)
+    {
+        for(int i = 0; i < generated.Count; i++)
+        {
+            for(int j = 0; j < generated[i].Length; j++)
+            {
+                if(generated[i][j] != 0) continue;
+                
+                generated[i][j] = row[j];
+            }
+            
+            int[] previous = i == 0 ? null : generated[i - 1];
+            possibilities.Insert(generated[i], previous);
         }
     }
 
@@ -50,23 +70,19 @@ public class Sudoku
     {
         foreach(int[] row in setup)
         {
+            remaining.Clear();
+            indexes.Clear();
             remaining.AddRange(allowedNumbers);
             for(int i = 0; i < allowedNumbers.Length; i++)
             {
-                remaining.Remove(row[i]);
-                if(row[i] != 0) continue;
+                if(remaining.Remove(row[i])) continue;
 
                 indexes.Add(i);
             }
 
             List<int[]> generated = new();
-            GenerateNumber(indexes, remaining, 0, generated, new int[allowedNumbers.Length]);
-            int[] previous;
-            for(int i = 0; i < generated.Count; i++)
-            {
-                previous = i == 0 ? null : generated[i - 1];
-                possibilities.Insert(generated[i], previous);
-            }
+            GenerateNumber(indexes, remaining, generated, new int[allowedNumbers.Length], 0);
+            DefinePossibilities(generated, row);
         }
     }
 

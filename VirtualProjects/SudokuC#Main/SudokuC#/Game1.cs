@@ -42,7 +42,8 @@ public class Game1 : Game
         Node<int[]> current = sudoku.possibilities.head;
         for(int i = 0; i < sudoku.possibilities.GetCount(); i++)
         {
-            Console.WriteLine(current.value[0] + current.value[1] + current.value[2]);
+            Console.WriteLine(current.value[0] + " " + current.value[1] + " " + current.value[2]);
+            current = current.next;
         }
         Console.WriteLine("haha");
 
